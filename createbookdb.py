@@ -20,7 +20,6 @@ except sqlite3.OperationalError:
 row = cursor.fetchone()
 lastline = row[0]
 printline = lastline+1
-#print('l. ' + str(printline) + '')
 print_this = list()
 try:
 	with open('dc.txt', encoding='utf-8') as t_file:
