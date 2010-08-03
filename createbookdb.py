@@ -1,11 +1,7 @@
 import sys
 import os
 import sqlite3
-try:
-	connection = sqlite3.connect('dc.db')
-except IOError:
-	print("Couldn't connect to the SQLite db. Exiting.")
-	sys.exit()
+connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
 # cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
 # This is useful: http://openbookproject.net//thinkCSpy/
@@ -15,7 +11,11 @@ cursor = connection.cursor()
 # If not, then don't try setting row = cursor, or any of that other stuff
 # The implication is that the script hasn't been run before
 # Just set lastline = 0, then continue
-cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
+try:
+	cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
+except sqlite3.OperationalError:
+	print("Couldn't find the specified table. Exiting.")
+	sys.exit()
 # get the highest page number
 row = cursor.fetchone()
 lastline = row[0]
