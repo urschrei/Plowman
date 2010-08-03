@@ -6,9 +6,12 @@ cursor = connection.cursor()
 # cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
 # open sqlite db, and retrieve last row
 # set some variable to the value of 'position': something = cursor.lastrowid
-lastline = cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
+cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
+row = cursor.fetchone()
+lastline = row[0]
 print(lastline)
 lastline = lastline + 1
+
 
 to_db = list()
 with open('dc.txt', encoding='utf-8') as t_file:
@@ -20,6 +23,6 @@ with open('dc.txt', encoding='utf-8') as t_file:
 			to_db.append(a_line)
 # printout = range(1,201)
 # for counter in printout:
-print(to_db[latestline])
-cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(latestline, "1"))
+print(to_db[lastline])
+cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
 connection.commit()
