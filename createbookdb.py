@@ -5,6 +5,7 @@ connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
 # cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
 # This is useful: http://openbookproject.net//thinkCSpy/
+# This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
 # TO-DO:
 # check if the following operation is successful.
 # If not, then don't try setting row = cursor, or any of that other stuff
