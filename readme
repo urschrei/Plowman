@@ -1,0 +1,3 @@
+# Description #
+
+A set of Python scripts designed to import the contents of a book from a text file, create a SQLite database containing one line of text per row, then tweet it, line by line.
