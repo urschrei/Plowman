@@ -9,8 +9,10 @@
 import sys
 import os
 import sqlite3
-sys.path.append("/Users/sth/scripts")
+import re
 import tweepy
+sys.path.append("/Users/sth/scripts")
+
 
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
@@ -37,6 +39,7 @@ try:
 				continue
 				# if we encounter a blank line, do nothing and carry on
 			else:
+				# check to see if it's a canto line
 				print_this.append(a_line)
 				# we could just jump to a specific line in the file, but that appears to be tricky in Python
 except IOError:
@@ -48,16 +51,21 @@ auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api = tweepy.API(auth)
 
 
-# TO-DO we'll want to make sure the line isn't a header, i.e. doesn't begin with "CANTO" etc.
-post='l. ' + str(printline) + ': ' + print_this[lastline]
-# check for exceptions:
-try:
-	api.update_status(post)
-except:
-	print "Something's gone wrong…"
-	sys.exit()
-# end of tweepy stuff
 
+# If line is a new Canto, append the following line to the tweet, instead of "l. "
+pattern = '^CANTO'
+if re.search(pattern, print_this[lastline]):
+	post=print_this[lastline] + print_this[lastline+1]
+else:
+	post='l. ' + str(printline) + ': ' + print_this[lastline]
+# check for exceptions:
+#try:
+#	api.update_status(post)
+#except:
+#	print "Something's gone wrong…"
+#	sys.exit()
+# end of tweepy stuff
+print post
 lastline = lastline + 1
 cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
 connection.commit()
