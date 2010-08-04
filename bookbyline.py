@@ -12,6 +12,10 @@ import sqlite3
 import re
 import tweepy
 sys.path.append("/Users/sth/scripts")
+# tweepy stuff
+auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
+api=tweepy.API(auth)
+
 
 connection=sqlite3.connect('dc.db')
 cursor=connection.cursor()
@@ -25,12 +29,14 @@ except sqlite3.OperationalError:
 	# set up a new blank table, and start off at line 0
 	# retry logic goes here
 
-# get the highest page number
+# get the highest page number, and the line display offset
 row=cursor.fetchone()
-lastline=row[0]
+lastline=row[1]
 off_set=row[3]
-# The poem starts on line 1, not line 0.
+
+# The poem starts on line 1, not line 0. Subtract offset value from 'real' line display number
 printline=(lastline + 1) - off_set
+
 
 
 def format_tweet(input_string,next_string):
@@ -41,13 +47,12 @@ def format_tweet(input_string,next_string):
 	returns a ready-to-tweet string, either a canto, or a poetry line. """
 	
 	# If line is a new Canto, append the following line to it, instead of "l. "
-	pattern='^CANTO'
-	if re.search(pattern, input_string):
+	#pattern='^CANTO'
+	#if re.search(pattern, input_string):
+	if input_string.startswith("CANTO"):
 		global lastline
-		print "current line:" + str(lastline)
-		lastline = lastline + 1
-		print "current line now:" + str(lastline)
 		global off_set
+		lastline = lastline + 1
 		off_set = off_set + 1
 		return input_string + next_string
 	else:
@@ -55,7 +60,7 @@ def format_tweet(input_string,next_string):
 		# Maybe we need to create a new object with properties tweet_text and off_set
 
 
-book_line = list()
+get_lines = list()
 try:
 	with open('dc.txt', "r") as t_file:
 		for a_line in t_file:
@@ -63,16 +68,13 @@ try:
 				continue
 				# if we encounter a blank line, do nothing and carry on
 			else:
-				book_line.append(a_line)
+				get_lines.append(a_line)
 				# we could just jump to a specific line in the file, but that appears to be tricky in Python
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
-tweet=format_tweet(book_line[lastline],book_line[lastline + 1])
 
-# tweepy stuff
-auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
-api=tweepy.API(auth)
+tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 
 # check for exceptions:
 #try:
@@ -80,8 +82,8 @@ api=tweepy.API(auth)
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
-print "off_set is currently:" + str(off_set)
-print "last line is currently:" + str(lastline)
+
+
 print tweet
 cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline + 1, "1", off_set))
 connection.commit()
