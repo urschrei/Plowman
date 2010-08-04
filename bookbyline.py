@@ -3,17 +3,17 @@
 # This is useful: http://openbookproject.net//thinkCSpy/
 # This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
 
+# twitter: robo_dante/beatrice
+# gmail: alighieribot2010/beatrice1265
+
 import sys
 import os
 import sqlite3
 sys.path.append("/Users/sth/scripts")
 import yatcip
+
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
-
-# twitter: robo_dante/beatrice
-# gmail alighieribot2010/beatrice1265
-
 try:
 	cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
@@ -28,6 +28,7 @@ except sqlite3.OperationalError:
 row = cursor.fetchone()
 lastline = row[0]
 printline = lastline+1
+
 print_this = list()
 try:
 	with open('dc.txt', encoding='utf-8') as t_file:
@@ -42,7 +43,7 @@ except IOError:
 	print("Couldn't open the text file for reading. Exiting.")
 	sys.exit()
 
-# Twitter yatcip stuff
+# twitter yatcip stuff
 bot = yatcip.Twitter('dante_bot', 'beatrice')
 
 response = bot.update('my new post')
@@ -51,6 +52,7 @@ response = bot.update('my new post')
 for dm in bot.direct_messages():
     bot.direct_message('Thanks for your message!', dm['sender']['id'])
 
+# TO-DO we'll want to make sure the line isn't a header, i.e. doesn't begin with "CANTO" etc.
 post='l. ' + str(printline) + ': ' + print_this[lastline]
 # check for exceptions:
 try:
@@ -60,7 +62,6 @@ except:
 	sys.exit()
 # end of yatcip stuff
 
-# if it's successful, execute the next three lines
 lastline = lastline + 1
 cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
 connection.commit()
