@@ -10,11 +10,13 @@ import sys
 import os
 import sqlite3
 import tweepy
-sys.path.append("/Users/sth/scripts")
 
 # tweepy stuff
 auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api=tweepy.API(auth)
+
+
+
 # create a SQLite connection, or create a new db and table
 connection=sqlite3.connect('dc.db')
 cursor=connection.cursor()
@@ -33,6 +35,8 @@ except sqlite3.OperationalError:
 		# close the SQLite connection, and quit
 		connection.commit()
 		sys.exit()
+
+
 
 # get the highest page number, and the line display offset
 row=cursor.fetchone()
@@ -55,8 +59,8 @@ def format_tweet(input_string,next_string):
 	if input_string.startswith("CANTO"):
 		global lastline
 		global off_set
-		lastline = lastline + 1
-		off_set = off_set + 1
+		lastline=lastline + 1
+		off_set=off_set + 1
 		return input_string + next_string
 	else:
 		return 'l. ' + str(displayline) + ': ' + input_string
