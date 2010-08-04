@@ -33,7 +33,7 @@ off_set=row[3]
 printline=(lastline + 1) - off_set
 
 
-def format_tweet(input_string,next_string,lastline,off_set):
+def format_tweet(input_string,next_string):
 	""" Properly format an input string based on whether it's a header line, or a poetry line
 	accepts 3 inputs: the current line from a book, the following line, and the current line display
 	off_set, which is incremented each time a header line is encountered, and subtracted from the
@@ -43,9 +43,11 @@ def format_tweet(input_string,next_string,lastline,off_set):
 	# If line is a new Canto, append the following line to it, instead of "l. "
 	pattern='^CANTO'
 	if re.search(pattern, input_string):
+		global lastline
 		print "current line:" + str(lastline)
 		lastline = lastline + 1
 		print "current line now:" + str(lastline)
+		global off_set
 		off_set = off_set + 1
 		return input_string + next_string
 	else:
@@ -66,7 +68,7 @@ try:
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
-tweet=format_tweet(book_line[lastline],book_line[lastline + 1],lastline,off_set)
+tweet=format_tweet(book_line[lastline],book_line[lastline + 1])
 
 # tweepy stuff
 auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
