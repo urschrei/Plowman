@@ -9,6 +9,9 @@
 import sys
 import os
 import sqlite3
+import logging
+LOG_FILENAME = '/Users/sth/library/logs/python.log'
+logging.basicConfig(filename=LOG_FILENAME,level=logging.ERROR)
 import tweepy
 
 # tweepy stuff
@@ -64,6 +67,7 @@ def format_tweet(input_string,next_string):
 		return input_string + next_string
 	else:
 		return 'l. ' + str(displayline) + ': ' + input_string
+	# what if it's neither a header nor a poetry line?
 
 
 
@@ -88,7 +92,7 @@ tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 #try:
 #	api.update_status(tweet)
 #except:
-#	print "Something's gone wrong…"
+#	logging.error("Something went wrong, and the tweet couldn't be sent")
 #	sys.exit()
 
 print tweet
