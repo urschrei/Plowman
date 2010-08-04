@@ -82,8 +82,6 @@ tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
-
-
 print tweet
 cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline + 1, "1", off_set))
 connection.commit()
