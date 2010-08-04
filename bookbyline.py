@@ -1,4 +1,8 @@
 #!/usr/local/bin/python3
+#encoding = utf-8
+# This is useful: http://openbookproject.net//thinkCSpy/
+# This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
+
 import sys
 import os
 import sqlite3
@@ -7,25 +11,19 @@ import yatcip
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
 
-# cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
-
-# This is useful: http://openbookproject.net//thinkCSpy/
-# This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
-
-# TO-DO:
-# check if the following operation is successful.
-# If not, then don't try setting row = cursor, or any of that other stuff
-# The implication is that the script hasn't been run before
-# Just set lastline = 0, then continue
-
 # twitter: robo_dante/beatrice
 # gmail alighieribot2010/beatrice1265
 
 try:
 	cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
-	print("Couldn't find the specified table. Exiting.")
-	sys.exit()
+	print("Couldn't find the specified table. Creating…")
+	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
+	lastline=0
+	cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
+	# set up a new blank table, and start off at line 0
+	# retry logic goes here
+
 # get the highest page number
 row = cursor.fetchone()
 lastline = row[0]
