@@ -13,22 +13,10 @@ import re
 import tweepy
 sys.path.append("/Users/sth/scripts")
 
-def format_tweet(input_string,next_string):
-	""" Properly format an input string based on whether it's a header line, or a poetry line
-	accepts an input string, the current line from a book, and the following string
-	returns a ready-to-tweet string, either a canto, or a poetry line. """
-	
-	# If line is a new Canto, append the following line to it, instead of "l. "
-	pattern = '^CANTO'
-	if re.search(pattern, input_string):
-		return input_string + next_string
-	else:
-		return 'l. ' + str(printline) + ': ' + input_string
-
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
 try:
-	cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
+	cursor.execute('SELECT * FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
 	print "Couldn't find the specified table. Creating…" 
 	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
@@ -40,8 +28,28 @@ except sqlite3.OperationalError:
 # get the highest page number
 row = cursor.fetchone()
 lastline = row[0]
+off_set = row[3]
 # The poem starts on line 1, not line 0.
-printline = lastline+1
+printline = (lastline+1)-off_set
+
+def format_tweet(input_string,next_string,lastline,off_set):
+	""" Properly format an input string based on whether it's a header line, or a poetry line
+	accepts 3 inputs: the current line from a book, the following line, and the current line display
+	off_set, which is incremented each time a header line is encountered, and subtracted from the
+	"real" line number, in order to display the correct line number.
+	returns a ready-to-tweet string, either a canto, or a poetry line. """
+	
+	# If line is a new Canto, append the following line to it, instead of "l. "
+	pattern = '^CANTO'
+	if re.search(pattern, input_string):
+		print "current line:" + str(lastline)
+		lastline = lastline+1
+		print "current line now:" + str(lastline)
+		off_set = off_set+1
+		return input_string + next_string
+	else:
+		return 'l. ' + str(printline) + ': ' + input_string
+		# Maybe we need to create a new object with properties tweet_text and off_set
 
 book_line = list()
 try:
@@ -56,7 +64,7 @@ try:
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
-tweet = format_tweet(book_line[lastline],book_line[lastline+1])
+tweet = format_tweet(book_line[lastline],book_line[lastline+1],lastline,off_set)
 
 # tweepy stuff
 auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
@@ -68,8 +76,9 @@ api = tweepy.API(auth)
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
-
+print "off_set is currently:" + str(off_set)
+print "last line is currently:" + str(lastline)
 print tweet
-cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline+1, "1"))
+cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline+1, "1", off_set))
 connection.commit()
 
