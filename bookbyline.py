@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-#encoding = utf-8
+# encoding = utf-8
 # This is useful: http://openbookproject.net//thinkCSpy/
 # This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
 
