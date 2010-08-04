@@ -39,7 +39,6 @@ try:
 				continue
 				# if we encounter a blank line, do nothing and carry on
 			else:
-				# check to see if it's a canto line
 				print_this.append(a_line)
 				# we could just jump to a specific line in the file, but that appears to be tricky in Python
 except IOError:
@@ -50,9 +49,7 @@ except IOError:
 auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api = tweepy.API(auth)
 
-
-
-# If line is a new Canto, append the following line to the tweet, instead of "l. "
+# If line is a new Canto, append the following line to it, instead of "l. "
 pattern = '^CANTO'
 if re.search(pattern, print_this[lastline]):
 	post=print_this[lastline] + print_this[lastline+1]
@@ -64,7 +61,7 @@ else:
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
-# end of tweepy stuff
+
 print post
 lastline = lastline + 1
 cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
