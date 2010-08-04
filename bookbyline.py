@@ -13,6 +13,17 @@ import re
 import tweepy
 sys.path.append("/Users/sth/scripts")
 
+def format_tweet(input_string,next_string):
+	""" Properly format an input string based on whether it's a header line, or a poetry line
+	accepts an input string, the current line from a book, and the following string
+	returns a ready-to-tweet string, either a canto, or a poetry line. """
+	
+	# If line is a new Canto, append the following line to it, instead of "l. "
+	pattern = '^CANTO'
+	if re.search(pattern, input_string):
+		return input_string + next_string
+	else:
+		return 'l. ' + str(printline) + ': ' + input_string
 
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
@@ -29,9 +40,10 @@ except sqlite3.OperationalError:
 # get the highest page number
 row = cursor.fetchone()
 lastline = row[0]
+# The poem starts on line 1, not line 0.
 printline = lastline+1
 
-print_this = list()
+book_line = list()
 try:
 	with open('dc.txt', "r") as t_file:
 		for a_line in t_file:
@@ -39,30 +51,25 @@ try:
 				continue
 				# if we encounter a blank line, do nothing and carry on
 			else:
-				print_this.append(a_line)
+				book_line.append(a_line)
 				# we could just jump to a specific line in the file, but that appears to be tricky in Python
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
+tweet = format_tweet(book_line[lastline],book_line[lastline+1])
 
 # tweepy stuff
 auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api = tweepy.API(auth)
 
-# If line is a new Canto, append the following line to it, instead of "l. "
-pattern = '^CANTO'
-if re.search(pattern, print_this[lastline]):
-	post=print_this[lastline] + print_this[lastline+1]
-else:
-	post='l. ' + str(printline) + ': ' + print_this[lastline]
 # check for exceptions:
 #try:
-#	api.update_status(post)
+#	api.update_status(tweet)
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
 
-print post
-lastline = lastline + 1
-cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
+print tweet
+cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline+1, "1"))
 connection.commit()
+
