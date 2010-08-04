@@ -44,7 +44,7 @@ except IOError:
 	sys.exit()
 
 # tweepy stuff
-auth = tweepy.BasicAuthHandler('dante_bot', 'beatrice')
+auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api = tweepy.API(auth)
 
 
