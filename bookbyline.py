@@ -21,25 +21,25 @@ cursor=connection.cursor()
 try:
 	cursor.execute('SELECT * FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
-	print "Couldn't find the specified table. Creating…" 
+	print "Couldn't find the specified table. Creating…"
+	# set up a new blank table, and insert a row which starts off at line 0
 	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER, off_set INTEGER)')
 	lastline=0
 	cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline, "1", 0))
-	# set up a new blank table, and start off at line 0
-	# retry logic goes here
 	try:
 		cursor.execute('SELECT * FROM position ORDER BY POSITION DESC LIMIT 1')
 	except sqlite3.OperationalError:
 		print "Still couldn't execute the SQL query, even though I created a new table. Giving up."
+		# close the SQLite connection, and quit
+		connection.commit()
 		sys.exit()
 
 # get the highest page number, and the line display offset
 row=cursor.fetchone()
 lastline=row[1]
 off_set=row[3]
-
-# The poem starts on line 1, not line 0. Subtract offset value from 'real' line display number
-printline=(lastline + 1) - off_set
+# the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
+displayline=(lastline + 1) - off_set
 
 
 
@@ -59,8 +59,8 @@ def format_tweet(input_string,next_string):
 		off_set = off_set + 1
 		return input_string + next_string
 	else:
-		return 'l. ' + str(printline) + ': ' + input_string
-		# Maybe we need to create a new object with properties tweet_text and off_set
+		return 'l. ' + str(displayline) + ': ' + input_string
+
 
 
 get_lines = list()
@@ -72,11 +72,12 @@ try:
 				# if we encounter a blank line, do nothing and carry on
 			else:
 				get_lines.append(a_line)
-				# we could just jump to a specific line in the file, but that appears to be tricky in Python
+				
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
 
+# take the raw text lines, and correctly format them for display
 tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 
 # check for exceptions:
@@ -85,6 +86,7 @@ tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 #except:
 #	print "Something's gone wrong…"
 #	sys.exit()
+
 print tweet
 cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline + 1, "1", off_set))
 connection.commit()
