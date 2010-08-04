@@ -1,5 +1,5 @@
-#!/usr/local/bin/python3
-# encoding = utf-8
+#!/usr/bin/python
+# coding=utf-8
 # This is useful: http://openbookproject.net//thinkCSpy/
 # This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
 
@@ -10,14 +10,14 @@ import sys
 import os
 import sqlite3
 sys.path.append("/Users/sth/scripts")
-import yatcip
+import tweepy
 
 connection = sqlite3.connect('dc.db')
 cursor = connection.cursor()
 try:
 	cursor.execute('SELECT position FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
-	print("Couldn't find the specified table. Creating…")
+	print "Couldn't find the specified table. Creating…" 
 	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER)')
 	lastline=0
 	cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
@@ -31,7 +31,7 @@ printline = lastline+1
 
 print_this = list()
 try:
-	with open('dc.txt', encoding='utf-8') as t_file:
+	with open('dc.txt', "r") as t_file:
 		for a_line in t_file:
 			if not a_line.strip():
 				continue
@@ -40,27 +40,23 @@ try:
 				print_this.append(a_line)
 				# we could just jump to a specific line in the file, but that appears to be tricky in Python
 except IOError:
-	print("Couldn't open the text file for reading. Exiting.")
+	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
 
-# twitter yatcip stuff
-bot = yatcip.Twitter('dante_bot', 'beatrice')
+# tweepy stuff
+auth = tweepy.BasicAuthHandler('dante_bot', 'beatrice')
+api = tweepy.API(auth)
 
-response = bot.update('my new post')
-# response is a twitter post, so response['text'] == 'my new post'
-
-for dm in bot.direct_messages():
-    bot.direct_message('Thanks for your message!', dm['sender']['id'])
 
 # TO-DO we'll want to make sure the line isn't a header, i.e. doesn't begin with "CANTO" etc.
 post='l. ' + str(printline) + ': ' + print_this[lastline]
 # check for exceptions:
 try:
-    bot.post(post)
+	api.update_status(post)
 except:
-	print("Something's gone wrong…")
+	print "Something's gone wrong…"
 	sys.exit()
-# end of yatcip stuff
+# end of tweepy stuff
 
 lastline = lastline + 1
 cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, "1"))
