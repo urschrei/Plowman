@@ -92,11 +92,13 @@ class Book:
 		
 		
 	def emit_tweet(self):
+		self.format_tweet()
+		print "last line is: " + str(self.db_lastline)
+		print "offset is: " + str(self.off_set)
 		try:
 			with self.connection:
 				self.cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(self.db_lastline + 1, self.off_set, self.db_curpos))
 			# don't print the line unless the DB is updateable
-			self.format_tweet()
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
 			#	logging.error("Something went wrong, and the tweet couldn't be sent")
