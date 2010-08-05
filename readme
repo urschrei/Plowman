@@ -1,3 +1,3 @@
 # Description #
 
-A set of Python scripts designed to import the contents of a book from a text file, create a SQLite database containing one line of text per row, then tweet it, line by line.
+A python script designed to tweet the contents of a text file, line by line. Line position is stored in a SQlite database. The script is configured to take account of header lines, and thus maintain line numbering.

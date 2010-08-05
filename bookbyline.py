@@ -9,12 +9,13 @@
 import sys
 import os
 import sqlite3
+
 import logging
 LOG_FILENAME = '/Users/sth/library/logs/python.log'
 logging.basicConfig(filename=LOG_FILENAME,level=logging.ERROR)
-import tweepy
 
 # tweepy stuff
+import tweepy
 auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api=tweepy.API(auth)
 
@@ -28,9 +29,9 @@ try:
 except sqlite3.OperationalError:
 	print "Couldn't find the specified table. Creating…"
 	# set up a new blank table, and insert a row which starts off at line 0
-	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, tweeted INTEGER, off_set INTEGER)')
+	cursor.execute('CREATE TABLE position (id INTEGER PRIMARY KEY, position INTEGER, off_set INTEGER)')
 	lastline=0
-	cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline, "1", 0))
+	cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline, 0))
 	try:
 		cursor.execute('SELECT * FROM position ORDER BY POSITION DESC LIMIT 1')
 	except sqlite3.OperationalError:
@@ -44,7 +45,7 @@ except sqlite3.OperationalError:
 # get the highest page number, and the line display offset
 row=cursor.fetchone()
 lastline=row[1]
-off_set=row[3]
+off_set=row[2]
 # the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
 displayline=(lastline + 1) - off_set
 
@@ -55,7 +56,7 @@ def format_tweet(input_string,next_string):
 	accepts 2 inputs: the current line from a book, and the following line. If the current line
 	begins with "CANTO", it's a header, so instead of displaying a line number, we join the next line
 	and increment both the line number and the line offset by 1. This means the line numbers
-	don't jump, when a header is encountered, as the offset is subtracted from the display line.
+	don't jump when a header is encountered, as the offset is subtracted from the display line.
 	Returns a ready-to-tweet string, either a canto, or a poetry line. """
 	#pattern='^CANTO'
 	#if re.search(pattern, input_string):
@@ -80,7 +81,7 @@ try:
 				# if we encounter a blank line, do nothing and carry on
 			else:
 				get_lines.append(a_line)
-				
+				# would it be more efficient to open, read one line, and store byte position?
 except IOError:
 	print "Couldn't open the text file for reading. Exiting."
 	sys.exit()
@@ -96,6 +97,7 @@ tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 #	sys.exit()
 
 print tweet
-cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)',(lastline + 1, "1", off_set))
+cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline + 1, off_set))
 connection.commit()
+connection.close()
 
