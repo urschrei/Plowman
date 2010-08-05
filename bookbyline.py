@@ -72,33 +72,47 @@ class Book:
 		
 		
 		
-	def format_tweet(self):
+	def format_tweet(self,newvals):
 		""" Properly format an input string based on whether it's a header line, or a poetry line
-		accepts 2 inputs: the current line from a book, and the following line. If the current line
-		begins with "CANTO", it's a header, so instead of displaying a line number, we join the next line
-		and increment both the line number and the line offset by 1. This means the line numbers
-		don't jump when a header is encountered, as the offset is subtracted from the display line.
-		Returns a ready-to-tweet string, either a canto, or a poetry line. """
+		If the current line begins with "CANTO", it's a header, so instead of displaying a line number,
+		we join the next line and increment both the line number and the line offset by 1. This means the
+		line numbers don't jump when a header is encountered, as the offset is subtracted from the display line.
+		
+		Prints a properly-formatted string, either a canto, or a poetry line. """
 		#pattern='^CANTO'
 		#if re.search(pattern, input_string):
 		if self.lastline.startswith("CANTO"):
-			self.db_lastline=self.db_lastline + 1
-			self.off_set=self.off_set + 1
-			print str(self.lastline) + str(self.nextline)
+			self.db_lastline += 1
+			newvals.append(self.db_lastline)
+			self.off_set += 1
+			newvals.append(self.off_set)
+			message = str(self.lastline) + str(self.nextline)
+			newvals.append(message)
 		else:
-			print 'l. ' + str(self.displayline) + ': ' + self.lastline
+			newvals.append(self.db_lastline)
+			newvals.append(self.off_set)
+			message = 'l. ' + str(self.displayline) + ': ' + self.lastline
+			newvals.append(message)
+		return newvals
 		# what if it's neither a header nor a poetry line?
 		
 		
 		
 	def emit_tweet(self):
-		self.format_tweet()
-		print "last line is: " + str(self.db_lastline)
-		print "offset is: " + str(self.off_set)
+		""" First call the format_tweet() function, which correctly formats the current object's lastline and thisline
+		properties, depending on what they are, and then prints / tweets them. It then writes the updated last line
+		printed and line display offset values the DB """
+		# updates() will be filled with values which will be emitted following a successful DB update
+		updates=list()
+		self.format_tweet(updates)
+		# don't print the line unless the DB is updateable
 		try:
 			with self.connection:
-				self.cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(self.db_lastline + 1, self.off_set, self.db_curpos))
-			# don't print the line unless the DB is updateable
+				self.cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(updates[0] + 1, updates[1], self.db_curpos))
+			try:
+				print str(updates[2])
+			except:
+				print "Couldn't output the message."
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
 			#	logging.error("Something went wrong, and the tweet couldn't be sent")
