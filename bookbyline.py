@@ -21,9 +21,10 @@ api=tweepy.API(auth)
 
 
 
-
 class Book:
-	"Create a Book object from a text file"
+	""" Create a Book object from a text file. A sqlite3 connection object is created, and an attempt it made to
+	retrieve a row matching from a DB matching that of the filename which was passed. If no db is found, a new
+	DB is created and a table containing default values is inserted """
 	def __init__(self, fname=None):
 		self.name = fname
 		s = self.name.split(".")
@@ -52,14 +53,14 @@ class Book:
 		self.db_lastline=row[1]
 		self.db_curpos=row[1]
 		self.off_set=row[2]
-		# the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
 		get_lines = list()
 		try:
+			# try to open the specified text file for reading
 			with open(self.name, "r") as t_file:
 				for a_line in t_file:
 					if not a_line.strip():
 						continue
-						# if we encounter a blank line, do nothing and carry on
+						# if we encounter a blank line, skip it, and carry on
 					else:
 						get_lines.append(a_line)
 						# would it be more efficient to open, read one line, and store byte position?
@@ -67,7 +68,8 @@ class Book:
 			print "Couldn't open the text file for reading. Exiting."
 			sys.exit()
 		self.lastline = get_lines[self.db_lastline]
-		self.nextline = get_lines[self.db_lastline+1]
+		self.nextline = get_lines[self.db_lastline + 1]
+		# the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
 		self.displayline=(self.db_lastline + 1) - self.off_set
 		
 		
@@ -101,16 +103,20 @@ class Book:
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats the current object's lastline and thisline
 		properties, depending on what they are, and then prints / tweets them. It then writes the updated last line
-		printed and line display offset values the DB """
+		printed and line display offset values the DB 
+		
+		Returns a list of values which are used to output the message and update the DB """
 		# updates() will be filled with values which will be emitted following a successful DB update
 		updates=list()
 		self.format_tweet(updates)
 		# don't print the line unless the DB is updateable
 		try:
 			with self.connection:
-				self.cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(updates[0] + 1, updates[1], self.db_curpos))
+				self.cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(updates[0] + 1, updates[1] \
+				, self.db_curpos))
 			try:
 				print str(updates[2])
+				# api.update_status(str(updates[2]))
 			except:
 				print "Couldn't output the message."
 		except sqlite3.OperationalError:
@@ -122,16 +128,4 @@ class Book:
 
 b=Book('dc.txt')
 b.emit_tweet()
-
-
-
-
-# check for exceptions:
-#try:
-#	api.update_status(tweet)
-#except:
-#	sys.exit()
-
-# we only need a single line in the DB, since we're only storing a 'pointer'
-
 
