@@ -24,6 +24,8 @@ api=tweepy.API(auth)
 # create a SQLite connection, or create a new db and table
 connection=sqlite3.connect('dc.db')
 cursor=connection.cursor()
+# we don't necessarily need a row factory
+connection.row_factory=sqlite3.Row
 try:
 	cursor.execute('SELECT * FROM position ORDER BY POSITION DESC LIMIT 1')
 except sqlite3.OperationalError:
@@ -38,6 +40,7 @@ except sqlite3.OperationalError:
 		print "Still couldn't execute the SQL query, even though I created a new table. Giving up."
 		# close the SQLite connection, and quit
 		connection.commit()
+		connection.close()
 		sys.exit()
 
 
@@ -45,6 +48,7 @@ except sqlite3.OperationalError:
 # get the highest page number, and the line display offset
 row=cursor.fetchone()
 lastline=row[1]
+curpos=row[1]
 off_set=row[2]
 # the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
 displayline=(lastline + 1) - off_set
@@ -93,11 +97,16 @@ tweet=format_tweet(get_lines[lastline],get_lines[lastline + 1])
 #try:
 #	api.update_status(tweet)
 #except:
-#	logging.error("Something went wrong, and the tweet couldn't be sent")
 #	sys.exit()
 
-print tweet
-cursor.execute('INSERT INTO position VALUES (null, ?, ?)',(lastline + 1, off_set))
-connection.commit()
+# we only need a single line in the DB, since we're only storing a 'pointer'
+try:
+	with connection:
+		cursor.execute('UPDATE position SET position=?,off_set=? WHERE position=?',(lastline + 1, off_set, curpos))
+	# don't print the line unless the DB is updateable
+	print tweet
+except sqlite3.OperationalError:
+	print "Wasn't able to update the DB."
+	#	logging.error("Something went wrong, and the tweet couldn't be sent")
 connection.close()
 
