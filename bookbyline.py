@@ -9,7 +9,7 @@
 import sys
 import os
 import sqlite3
-
+import datetime
 import logging
 LOG_FILENAME = '/Users/sth/library/logs/python.log'
 logging.basicConfig(filename=LOG_FILENAME,level=logging.ERROR)
@@ -21,6 +21,8 @@ api=tweepy.API(auth)
 
 if len(sys.argv) < 3:
 	print "Not enough arguments. Please call the script like this: bookbyline.py filename.txt header"
+	now=datetime.datetime.now()
+	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Not enough arguments")
 	sys.exit()
 
 class Book:
@@ -73,8 +75,17 @@ class Book:
 		except IOError:
 			print "Couldn't open the text file for reading. Exiting."
 			sys.exit()
-		self.lastline = get_lines[self.db_lastline]
-		self.nextline = get_lines[self.db_lastline + 1]
+		# Check that we haven't reached the end of the file
+		try:
+			self.lastline = get_lines[self.db_lastline]
+		except IndexError:
+			now=datetime.datetime.now()
+			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Reached " + self.name + " EOF")
+			sys.exit()
+		try:
+			self.nextline = get_lines[self.db_lastline + 1]
+		except IndexError:
+			self.nextline=""
 		# the poem starts on line 1, not line 0, so increase by 1, then subtract offset from 'real' line display
 		self.displayline=(self.db_lastline + 1) - self.off_set
 		
@@ -107,6 +118,7 @@ class Book:
 		
 		
 	def emit_tweet(self):
+		now=datetime.datetime.now()
 		""" First call the format_tweet() function, which correctly formats the current object's lastline and thisline
 		properties, depending on what they are, and then prints / tweets them. It then writes the updated last line
 		printed and line display offset values the DB 
@@ -125,10 +137,13 @@ class Book:
 				# api.update_status(str(updates[2]))
 			except:
 				print "Couldn't output the message."
+				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Couldn't output the message")
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
+			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Couldn't update the DB")
 			#	logging.error("Something went wrong, and the tweet couldn't be sent")
 		self.connection.close()
+
 
 
 # first argument (argv[0]) is always the filename – not what we want
