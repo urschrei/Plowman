@@ -19,7 +19,9 @@ import tweepy
 auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api=tweepy.API(auth)
 
-
+if len(sys.argv) < 3:
+	print "Not enough arguments. Please call the script like this: bookbyline.py filename.txt header"
+	sys.exit()
 
 class Book:
 	""" Create a Book object from a text file. Takes two arguments:
