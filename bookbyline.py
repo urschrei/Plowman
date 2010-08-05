@@ -22,11 +22,15 @@ api=tweepy.API(auth)
 
 
 class Book:
-	""" Create a Book object from a text file. A sqlite3 connection object is created, and an attempt it made to
+	""" Create a Book object from a text file. Takes two arguments:
+	1. a filename, from which text will be read
+	2. a string used to identify header lines
+	A sqlite3 connection object is created, and an attempt it made to
 	retrieve a row matching from a DB matching that of the filename which was passed. If no db is found, a new
 	DB is created and a table containing default values is inserted """
-	def __init__(self, fname=None):
+	def __init__(self, fname=None, hid=None):
 		self.name = fname
+		self.header_id = hid
 		s = self.name.split(".")
 		self.db_name = str(s[0]) + ".db"
 		# create a SQLite connection, or create a new db and table
@@ -83,7 +87,7 @@ class Book:
 		Prints a properly-formatted string, either a canto, or a poetry line. """
 		#pattern='^CANTO'
 		#if re.search(pattern, input_string):
-		if self.lastline.startswith("CANTO"):
+		if self.lastline.startswith(self.header_id):
 			self.db_lastline += 1
 			newvals.append(self.db_lastline)
 			self.off_set += 1
@@ -125,7 +129,7 @@ class Book:
 		self.connection.close()
 
 
-
-b=Book('dc.txt')
+# first argument (argv[0]) is always the filename – not what we want
+b=Book(sys.argv[1],sys.argv[2])
 b.emit_tweet()
 
