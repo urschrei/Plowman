@@ -102,7 +102,7 @@ class Book:
 		self.displayline = (self.db_lastline + 1) - self.off_set
 		
 		
-	
+		
 	def _format_tweet(self, newvals):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
@@ -130,7 +130,7 @@ class Book:
 			newvals.append(message)
 		return newvals
 		# what if it's neither a header nor a poetry line?
-	
+		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
 		the current object's lastline and thisline properties, depending
