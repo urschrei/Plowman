@@ -81,8 +81,8 @@ class BookFromTextFile:
 		self.db_curpos = row[1]
 		self.off_set = row[2]
 		get_lines = list()
+		# try to open the specified text file for reading
 		try:
-			# try to open the specified text file for reading
 			with open(self.name, "r") as t_file:
 				for a_line in t_file:
 					if not a_line.strip():
@@ -95,7 +95,7 @@ class BookFromTextFile:
 		except IOError:
 			print "Couldn't open the text file for reading. Exiting."
 			sys.exit()
-		# Check that we haven't reached the end of the file
+		# check that we haven't reached the end of the file
 		try:
 			self.lastline = get_lines[self.db_lastline]
 		except IndexError:
@@ -103,6 +103,7 @@ class BookFromTextFile:
 			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
 			str(sys.argv[0]) + " " + "Reached " + self.name + " EOF")
 			sys.exit()
+		# catch error if nextline would be past EOF
 		try:
 			self.nextline = get_lines[self.db_lastline + 1]
 		except IndexError:
