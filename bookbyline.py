@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 # This is useful: http://openbookproject.net//thinkCSpy/
 # This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
@@ -18,8 +18,9 @@ import sqlite3
 import datetime
 import logging
 import string
-LOG_FILENAME = '/Users/sth/library/logs/python.log'
+LOG_FILENAME = '/var/log/twitter_books.log'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.ERROR)
+now = datetime.datetime.now()
 
 # tweepy stuff
 import tweepy
@@ -29,7 +30,6 @@ api = tweepy.API(auth)
 if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
 	bookbyline.py filename.txt header"
-	now = datetime.datetime.now()
 	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) \
 	 + " " + "Incorrect number of arguments")
 	sys.exit()
@@ -44,6 +44,7 @@ class BookFromTextFile:
 	DB is created and a table containing default values is inserted.
 	"""
 	def __init__(self, fname = None, hid = None):
+		global now
 		self.name = fname
 		self.header_id = hid
 		spt = self.name.split(".")
@@ -52,26 +53,28 @@ class BookFromTextFile:
 		try:
 			self.connection = sqlite3.connect(self.db_name)
 		except IOError:
-			print "Couldn't read or create a blank DB. That's a show-stopper."
+			logging.error(now.strftime("%Y-%m-%d %H:%M") \
+			 + " Couldn't create a DB. That's a show-stopper.")
 			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
 			self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
 			DESC LIMIT 1')
 		except sqlite3.OperationalError:
-			print "Couldn't find the specified table. Creating…"
+			logging.error(now.strftime("%Y-%m-%d %H:%M") \
+			 + " Couldn't find the specified table. Creating…")
 			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
 			KEY, position INTEGER, header STRING)')
 			db_lastline = 0
-			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?)' \
-			,(db_lastline, 0))
+			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)' \
+			,(db_lastline, 0, ""))
 			try:
 				self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
 				DESC LIMIT 1')
 			except sqlite3.OperationalError:
-				print "Still couldn't execute the SQL query, even though I \
-				created a new table. Giving up."
+				logging.error(now.strftime("%Y-%m-%d %H:%M") \
+				 + "Still couldn't execute query. Insert statement problem?")
 				# close the SQLite connection, and quit
 				self.connection.commit()
 				self.connection.close()
@@ -97,14 +100,14 @@ class BookFromTextFile:
 						# would it be more efficient to open, read one line,
 						# and store byte position?
 		except IOError:
-			print "Couldn't open the text file for reading. Exiting."
+			logging.error(now.strftime("%Y-%m-%d %H:%M") \
+			 + " Couldn't open text file for reading.")
 			sys.exit()
 		# check that we haven't reached the end of the file
 		try:
 			self.lastline = get_lines[self.db_lastline]
 		except IndexError:
-			curtime = datetime.datetime.now()
-			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
+			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 			str(sys.argv[0]) + " " + "Reached " + self.name + " EOF")
 			sys.exit()
 		# catch error if nextline would be past EOF
@@ -155,7 +158,6 @@ class BookFromTextFile:
 		Returns a list of values which are used to output the message and
 		update the DB
 		"""
-		curtime = datetime.datetime.now()
 		# updates() will be filled with values which will be emitted
 		# following a successful DB update
 		updates = list()
@@ -167,18 +169,18 @@ class BookFromTextFile:
 				displayline = ?, header = ? WHERE position = ?',(updates[0] \
 				+ 1, self.displayline, self.prefix, self.db_curpos))
 				try:
-					# print self.prefix + str(updates[1])
-					api.update_status(self.prefix + str(updates[1]))
+					print self.prefix + str(updates[1])
+					# api.update_status(self.prefix + str(updates[1]))
 				# we need to define some exception types here
 				except:
 					# this exception should percolate back up one level
 					print "Couldn't output the message."
-					logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
+					logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 					 str(sys.argv[0]) + " " + "Couldn't output the message")
 					self.connection.rollback()
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
-			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
+			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 			str(sys.argv[0]) + " " + "Couldn't update the DB")
 			# logging.error("The tweet couldn't be sent")
 		self.connection.close()
