@@ -62,7 +62,7 @@ class BookFromTextFile:
 			print "Couldn't find the specified table. Creating…"
 			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
-			KEY, position INTEGER, off_set INTEGER)')
+			KEY, position INTEGER, header STRING)')
 			db_lastline = 0
 			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?)' \
 			,(db_lastline, 0))
