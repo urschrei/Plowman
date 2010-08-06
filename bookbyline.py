@@ -23,8 +23,8 @@ if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
 	bookbyline.py filename.txt header"
 	now = datetime.datetime.now()
-	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + \
-	"Incorrect number of arguments")
+	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) \
+	 + " " + "Incorrect number of arguments")
 	sys.exit()
 
 class Book:
@@ -49,7 +49,7 @@ class Book:
 			DESC LIMIT 1')
 		except sqlite3.OperationalError:
 			print "Couldn't find the specified table. Creating…"
-			# set up a new blank table, and insert a row which starts off at line 0
+			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
 			KEY, position INTEGER, off_set INTEGER)')
 			db_lastline = 0
