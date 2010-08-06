@@ -17,6 +17,7 @@ import sys
 import sqlite3
 import datetime
 import logging
+import string
 LOG_FILENAME = '/Users/sth/library/logs/python.log'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.ERROR)
 
@@ -133,13 +134,15 @@ class BookFromTextFile:
 			self.prefix = str(self.lastline)
 			# reset display line to 1
 			self.displayline = 1
-			message = 'l. ' + str(self.displayline) + ': ' + self.nextline
+			message = 'l. ' + str(self.displayline) + ': ' + \
+			self.nextline.strip()
 			newvals.append(message)
 		else:
 			newvals.append(self.db_lastline)
 			# increment display line
 			self.displayline += 1
-			message = 'l. ' + str(self.displayline) + ': ' + self.lastline
+			message = 'l. ' + str(self.displayline) + ': ' + \
+			self.lastline.strip()
 			newvals.append(message)
 		return newvals
 		# what if it's neither a header nor a poetry line?
