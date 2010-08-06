@@ -108,8 +108,9 @@ class BookFromTextFile:
 		# catch error if nextline would be past EOF
 		try:
 			self.nextline = get_lines[self.db_lastline + 1]
+		# This means we've reached the end of the file, so append "-- End"
 		except IndexError:
-			self.nextline = ""
+			self.lastline = str(get_lines[self.db_lastline]) + "-- End"
 		# the poem starts on line 1, not line 0, so increase by 1,
 		# then subtract offset from 'real' line display
 		
@@ -134,15 +135,15 @@ class BookFromTextFile:
 			self.prefix = str(self.lastline)
 			# reset display line to 1
 			self.displayline = 1
-			message = 'l. ' + str(self.displayline) + ': ' + \
-			self.nextline.strip()
+			message = 'l. ' + str(self.displayline) + ': ' \
+			+ self.nextline.strip()
 			newvals.append(message)
 		else:
 			newvals.append(self.db_lastline)
 			# increment display line
 			self.displayline += 1
-			message = 'l. ' + str(self.displayline) + ': ' + \
-			self.lastline.strip()
+			message = 'l. ' + str(self.displayline) + ': ' \
+			+ self.lastline.strip()
 			newvals.append(message)
 		return newvals
 		# what if it's neither a header nor a poetry line?
