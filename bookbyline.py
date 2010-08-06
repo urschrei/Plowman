@@ -5,9 +5,15 @@
 
 # twitter: robo_dante/beatrice
 # gmail: alighieribot2010/beatrice1265
-
+""" 
+This module reads a text file from disk, and outputs properly-
+formatted lines from it, one or two lines at a time, depending on
+whether it's a header line, or body text. The line position is stored in
+a sqlite3 database, in the same directory as the text file.
+The module takes exactly two arguments: the file name (including path), and
+the text to match against in order to designate a header line
+"""
 import sys
-import os
 import sqlite3
 import datetime
 import logging
@@ -27,22 +33,26 @@ if len(sys.argv) != 3:
 	 + " " + "Incorrect number of arguments")
 	sys.exit()
 
-class Book:
+class BookFromTextFile:
 	""" Create a Book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
 	A sqlite3 connection object is created, and an attempt it made to
-	retrieve a row matching from a DB matching that of the filename which was \
+	retrieve a row matching from a DB matching the filename which was \
 	passed. If no DB is found, a new
 	DB is created and a table containing default values is inserted.
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
 		self.header_id = hid
-		s = self.name.split(".")
-		self.db_name = str(s[0]) + ".db"
+		spt = self.name.split(".")
+		self.db_name = str(spt[0]) + ".db"
 		# create a SQLite connection, or create a new db and table
-		self.connection = sqlite3.connect(self.db_name)
+		try:
+			self.connection = sqlite3.connect(self.db_name)
+		except IOError:
+			print "Couldn't read or create a blank DB. That's a show-stopper."
+			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
 			self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
@@ -89,8 +99,8 @@ class Book:
 		try:
 			self.lastline = get_lines[self.db_lastline]
 		except IndexError:
-			now = datetime.datetime.now()
-			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+			curtime = datetime.datetime.now()
+			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
 			str(sys.argv[0]) + " " + "Reached " + self.name + " EOF")
 			sys.exit()
 		try:
@@ -103,7 +113,7 @@ class Book:
 		
 		
 		
-	def _format_tweet(self, newvals):
+	def format_tweet(self, newvals):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
 		(see self.header_id), instead of displaying a line number,
@@ -140,11 +150,11 @@ class Book:
 		Returns a list of values which are used to output the message and
 		update the DB
 		"""
-		now = datetime.datetime.now()
+		curtime = datetime.datetime.now()
 		# updates() will be filled with values which will be emitted
 		# following a successful DB update
 		updates = list()
-		self._format_tweet(updates)
+		self.format_tweet(updates)
 		# don't print the line unless the DB is updateable
 		try:
 			with self.connection:
@@ -154,13 +164,14 @@ class Book:
 			try:
 				print str(updates[2])
 				# api.update_status(str(updates[2]))
+			# we need to define some exception types here
 			except:
 				print "Couldn't output the message."
-				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+				logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
 				 str(sys.argv[0]) + " " + "Couldn't output the message")
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
-			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
 			str(sys.argv[0]) + " " + "Couldn't update the DB")
 			# logging.error("The tweet couldn't be sent")
 		self.connection.close()
@@ -168,6 +179,6 @@ class Book:
 
 
 # first argument (argv[0]) is always the filename – not what we want
-b = Book(sys.argv[1], sys.argv[2])
+b = BookFromTextFile(sys.argv[1], sys.argv[2])
 b.emit_tweet()
 
