@@ -164,14 +164,16 @@ class BookFromTextFile:
 				self.cursor.execute('UPDATE position SET position = ?,\
 				displayline = ?, header = ? WHERE position = ?',(updates[0] \
 				+ 1, self.displayline, self.prefix, self.db_curpos))
-			try:
-				print self.prefix + str(updates[1])
-				# api.update_status(str(updates[2]))
-			# we need to define some exception types here
-			except:
-				print "Couldn't output the message."
-				logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
-				 str(sys.argv[0]) + " " + "Couldn't output the message")
+				try:
+					print self.prefix + str(updates[2])
+					# api.update_status(str(updates[1]))
+				# we need to define some exception types here
+				except:
+					# this exception should percolate back up one level
+					print "Couldn't output the message."
+					logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
+					 str(sys.argv[0]) + " " + "Couldn't output the message")
+					self.connection.rollback()
 		except sqlite3.OperationalError:
 			print "Wasn't able to update the DB."
 			logging.error(curtime.strftime("%Y-%m-%d %H:%M") + " " + \
