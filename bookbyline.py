@@ -76,14 +76,16 @@ class BookFromTextFile:
 				self.connection.commit()
 				self.connection.close()
 				sys.exit()
+		
 		# get the highest page number, and the line display offset
 		row = self.cursor.fetchone()
 		self.db_lastline = row[1]
 		self.db_curpos = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-		get_lines = list()
+				
 		# try to open the specified text file for reading
+		get_lines = list()
 		try:
 			with open(self.name, "r") as t_file:
 				for a_line in t_file:
@@ -111,10 +113,6 @@ class BookFromTextFile:
 		# This means we've reached the end of the file, so append "-- End"
 		except IndexError:
 			self.lastline = str(get_lines[self.db_lastline]) + "-- End"
-		# the poem starts on line 1, not line 0, so increase by 1,
-		# then subtract offset from 'real' line display
-		
-		
 		
 	def format_tweet(self, newvals):
 		""" Properly format an input string based on whether it's a header
