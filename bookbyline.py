@@ -79,7 +79,8 @@ class BookFromTextFile:
 		row = self.cursor.fetchone()
 		self.db_lastline = row[1]
 		self.db_curpos = row[1]
-		self.off_set = row[2]
+		self.displayline = row[2]
+		self.prefix = row[3]
 		get_lines = list()
 		# try to open the specified text file for reading
 		try:
@@ -110,7 +111,6 @@ class BookFromTextFile:
 			self.nextline = ""
 		# the poem starts on line 1, not line 0, so increase by 1,
 		# then subtract offset from 'real' line display
-		self.displayline = (self.db_lastline + 1) - self.off_set
 		
 		
 		
@@ -130,13 +130,15 @@ class BookFromTextFile:
 		if self.lastline.startswith(self.header_id):
 			self.db_lastline += 1
 			newvals.append(self.db_lastline)
-			self.off_set += 1
-			newvals.append(self.off_set)
-			message = str(self.lastline) + str(self.nextline)
+			self.prefix = str(self.lastline)
+			# reset display line to 1
+			self.displayline = 1
+			message = 'l. ' + str(self.displayline) + ': ' + self.nextline
 			newvals.append(message)
 		else:
 			newvals.append(self.db_lastline)
-			newvals.append(self.off_set)
+			# increment display line
+			self.displayline += 1
 			message = 'l. ' + str(self.displayline) + ': ' + self.lastline
 			newvals.append(message)
 		return newvals
@@ -160,10 +162,10 @@ class BookFromTextFile:
 		try:
 			with self.connection:
 				self.cursor.execute('UPDATE position SET position = ?,\
-				off_set = ? WHERE position = ?',(updates[0] + 1, updates[1] \
-				, self.db_curpos))
+				displayline = ?, header = ? WHERE position = ?',(updates[0] \
+				+ 1, self.displayline, self.prefix, self.db_curpos))
 			try:
-				print str(updates[2])
+				print self.prefix + str(updates[1])
 				# api.update_status(str(updates[2]))
 			# we need to define some exception types here
 			except:
