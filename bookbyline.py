@@ -19,10 +19,10 @@ import tweepy
 auth=tweepy.BasicAuthHandler('robo_dante', 'beatrice')
 api=tweepy.API(auth)
 
-if len(sys.argv) < 3:
-	print "Not enough arguments. Please call the script like this: bookbyline.py filename.txt header"
+if len(sys.argv) != 3:
+	print "Incorrect number of arguments. Please call the script like this: bookbyline.py filename.txt header"
 	now=datetime.datetime.now()
-	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Not enough arguments")
+	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) + " " + "Incorrect number of arguments")
 	sys.exit()
 
 class Book:
@@ -30,7 +30,7 @@ class Book:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
 	A sqlite3 connection object is created, and an attempt it made to
-	retrieve a row matching from a DB matching that of the filename which was passed. If no db is found, a new
+	retrieve a row matching from a DB matching that of the filename which was passed. If no DB is found, a new
 	DB is created and a table containing default values is inserted """
 	def __init__(self, fname=None, hid=None):
 		self.name = fname
@@ -93,12 +93,12 @@ class Book:
 		
 	def format_tweet(self,newvals):
 		""" Properly format an input string based on whether it's a header line, or a poetry line
-		If the current line begins with "CANTO", it's a header, so instead of displaying a line number,
+		If the current line is a header (see self.header_id), instead of displaying a line number,
 		we join the next line and increment both the line number and the line offset by 1. This means the
 		line numbers don't jump when a header is encountered, as the offset is subtracted from the display line.
 		
 		Prints a properly-formatted string, either a canto, or a poetry line. """
-		#pattern='^CANTO'
+		#pattern="^" + self.header_id
 		#if re.search(pattern, input_string):
 		if self.lastline.startswith(self.header_id):
 			self.db_lastline += 1
