@@ -11,7 +11,8 @@ formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text. The line position is stored in
 a sqlite3 database, in the same directory as the text file.
 The module takes exactly two arguments: the file name (including path), and
-the text to match against in order to designate a header line.
+the text to match against in order to designate a header line. The second
+argument can be given as a single word, or a comma-separated list
 """
 import sys
 import sqlite3
@@ -131,7 +132,7 @@ class BookFromTextFile:
 		
 		# Match against any single member of self.headers
 		for i in self.headers:
-			if self.lastline.startswith(i):
+			if self.lastline.startswith(i.strip()):
 				self.db_lastline += 1
 				newvals.append(self.db_lastline)
 				self.prefix = str(self.lastline)
