@@ -17,9 +17,8 @@ import sys
 import sqlite3
 import datetime
 import logging
-import string
-LOG_FILENAME = '/var/log/twitter_books.log'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.ERROR)
+log_filename = '/var/log/twitter_books.log'
+logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
 
 # tweepy stuff
@@ -44,7 +43,6 @@ class BookFromTextFile:
 	DB is created and a table containing default values is inserted.
 	"""
 	def __init__(self, fname = None, hid = None):
-		global now
 		self.name = fname
 		self.header_id = hid
 		spt = self.name.split(".")
@@ -188,6 +186,6 @@ class BookFromTextFile:
 
 
 # first argument (argv[0]) is always the filename – not what we want
-b = BookFromTextFile(sys.argv[1], sys.argv[2])
-b.emit_tweet()
+input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
+input_book.emit_tweet()
 
