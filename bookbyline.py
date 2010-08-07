@@ -6,7 +6,7 @@
 # twitter: robo_dante/beatrice
 # gmail: alighieribot2010/beatrice1265
 """ 
-This module reads a text file from disk, and tweets properly-
+Tis module reads a text file from disk, and outputs properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text. The line position is stored in
 a sqlite3 database, in the same directory as the text file.
@@ -177,8 +177,8 @@ class BookFromTextFile:
 				str(sys.argv[0]) + " " + "Couldn't update the DB")
 				# logging.error("The tweet couldn't be sent")
 			try:
-				#print self.prefix + str(updates[1])
-				api.update_status(self.prefix + str(updates[1]))
+				print self.prefix + str(updates[1])
+				# api.update_status(self.prefix + str(updates[1]))
 			# we need to define some exception types here
 			except tweepy.TweepError , err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
