@@ -44,7 +44,7 @@ class BookFromTextFile:
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
-		self.header_id = hid
+		self.headers = hid.split(",")
 		spt = self.name.split(".")
 		self.db_name = str(spt[0]) + ".db"
 		# create a SQLite connection, or create a new db and table
@@ -126,25 +126,29 @@ class BookFromTextFile:
 		
 		Prints a properly-formatted string, either a canto or poetry line.
 		"""
-		#pattern="^" + self.header_id
+		#pattern="^blah"
 		#if re.search(pattern, input_string):
-		if self.lastline.startswith(self.header_id):
-			self.db_lastline += 1
-			newvals.append(self.db_lastline)
-			self.prefix = str(self.lastline)
-			# reset display line to 1
-			self.displayline = 1
-			message = 'l. ' + str(self.displayline) + ': ' \
-			+ self.nextline.strip()
-			newvals.append(message)
-		else:
-			newvals.append(self.db_lastline)
-			# increment display line
-			self.displayline += 1
-			message = 'l. ' + str(self.displayline) + ': ' \
-			+ self.lastline.strip()
-			newvals.append(message)
-		return newvals
+		
+		# Match against any single member of self.headers
+		for i in self.headers:
+			if self.lastline.startswith(i):
+				self.db_lastline += 1
+				newvals.append(self.db_lastline)
+				self.prefix = str(self.lastline)
+				# reset display line to 1
+				self.displayline = 1
+				message = 'l. ' + str(self.displayline) + ': ' \
+				+ self.nextline.strip()
+				newvals.append(message)
+				return newvals
+			else:
+				newvals.append(self.db_lastline)
+				# increment display line
+				self.displayline += 1
+				message = 'l. ' + str(self.displayline) + ': ' \
+				+ self.lastline.strip()
+				newvals.append(message)
+				return newvals
 		# what if it's neither a header nor a poetry line?
 		
 	def emit_tweet(self):
