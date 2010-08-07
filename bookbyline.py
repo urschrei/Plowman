@@ -25,7 +25,7 @@ now = datetime.datetime.now()
 # tweepy stuff
 import tweepy
 auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
-api = tweepy.API(auth)
+api = tweepy.API(auth, secure="True")
 
 if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
@@ -166,26 +166,25 @@ class BookFromTextFile:
 		updates = list()
 		self.format_tweet(updates)
 		# don't print the line unless the DB is updateable
-		try:
-			with self.connection:
+		with self.connection:
+			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
 				displayline = ?, header = ? WHERE position = ?',(updates[0] \
 				+ 1, self.displayline, self.prefix, self.db_curpos))
-				try:
-					print self.prefix + str(updates[1])
-					# api.update_status(self.prefix + str(updates[1]))
-				# we need to define some exception types here
-				except:
-					# this exception should percolate back up one level
-					print "Couldn't output the message."
-					logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-					 str(sys.argv[0]) + " " + "Couldn't output the message")
-					self.connection.rollback()
-		except sqlite3.OperationalError:
-			print "Wasn't able to update the DB."
-			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-			str(sys.argv[0]) + " " + "Couldn't update the DB")
-			# logging.error("The tweet couldn't be sent")
+			except (sqlite3.OperationalError, IndexError):
+				print "Wasn't able to update the DB."
+				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+				str(sys.argv[0]) + " " + "Couldn't update the DB")
+				# logging.error("The tweet couldn't be sent")
+			try:
+				#print self.prefix + str(updates[1])
+				api.update_status(self.prefix + str(updates[1]))
+			# we need to define some exception types here
+			except tweepy.TweepError , err:
+				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+				str(sys.argv[0]) + " " + "Couldn't update status. " + \
+				"Error was: " + str(err))
+				self.connection.rollback()
 		self.connection.close()
 
 
