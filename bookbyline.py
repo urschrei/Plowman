@@ -172,8 +172,8 @@ class BookFromTextFile:
 				displayline = ?, header = ? WHERE position = ?',(updates[0] \
 				+ 1, self.displayline, self.prefix, self.db_curpos))
 				try:
-					print self.prefix + str(updates[1])
-					# api.update_status(self.prefix + str(updates[1]))
+					# print self.prefix + str(updates[1])
+					api.update_status(self.prefix + str(updates[1]))
 				# we need to define some exception types here
 				except:
 					# this exception should percolate back up one level
