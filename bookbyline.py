@@ -6,7 +6,7 @@
 # twitter: robo_dante/beatrice
 # gmail: alighieribot2010/beatrice1265
 """ 
-This module reads a text file from disk, and outputs properly-
+This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text. The line position is stored in
 a sqlite3 database, in the same directory as the text file.
