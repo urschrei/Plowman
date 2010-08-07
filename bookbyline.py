@@ -176,9 +176,8 @@ class BookFromTextFile:
 				str(sys.argv[0]) + " " + "Couldn't update the DB")
 				# logging.error("The tweet couldn't be sent")
 			try:
-				#print self.prefix + str(updates[1])
-				api.update_status(self.prefix + str(updates[1]))
-			# we need to define some exception types here
+				print self.prefix + str(updates[1])
+				# api.update_status(self.prefix + str(updates[1]))
 			except tweepy.TweepError , err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Couldn't update status. " + \
