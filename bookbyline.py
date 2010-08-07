@@ -31,7 +31,7 @@ if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
 	bookbyline.py filename.txt header"
 	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) \
-	 + " " + "Incorrect number of arguments")
+	+ " " + "Incorrect number of arguments")
 	sys.exit()
 
 class BookFromTextFile:
@@ -53,7 +53,7 @@ class BookFromTextFile:
 			self.connection = sqlite3.connect(self.db_name)
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			 + " Couldn't create a DB. That's a show-stopper.")
+			+ " Couldn't create a DB. That's a show-stopper.")
 			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
@@ -61,7 +61,7 @@ class BookFromTextFile:
 			DESC LIMIT 1')
 		except sqlite3.OperationalError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			 + " Couldn't find the specified table. Creating…")
+			+ " Couldn't find the specified table. Creating…")
 			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
 			KEY, position INTEGER, header STRING)')
@@ -73,7 +73,7 @@ class BookFromTextFile:
 				DESC LIMIT 1')
 			except sqlite3.OperationalError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				 + "Still couldn't execute query. Insert statement problem?")
+				+ "Still couldn't execute query. Insert statement problem?")
 				# close the SQLite connection, and quit
 				self.connection.commit()
 				self.connection.close()
@@ -100,7 +100,7 @@ class BookFromTextFile:
 						# and store byte position?
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			 + " Couldn't open text file for reading.")
+			+ " Couldn't open text file for reading.")
 			sys.exit()
 		# check that we haven't reached the end of the file
 		try:
@@ -132,7 +132,7 @@ class BookFromTextFile:
 		
 		# Match against any single member of self.headers
 		for i in self.headers:
-			if self.lastline.startswith(i.strip()):
+			if self.lastline.startswith(i):
 				self.db_lastline += 1
 				newvals.append(self.db_lastline)
 				self.prefix = str(self.lastline)
@@ -142,14 +142,13 @@ class BookFromTextFile:
 				+ self.nextline.strip()
 				newvals.append(message)
 				return newvals
-			else:
-				newvals.append(self.db_lastline)
-				# increment display line
-				self.displayline += 1
-				message = 'l. ' + str(self.displayline) + ': ' \
-				+ self.lastline.strip()
-				newvals.append(message)
-				return newvals
+		# Proceed by using the latest untweeted line
+		newvals.append(self.db_lastline)
+		self.displayline += 1
+		message = 'l. ' + str(self.displayline) + ': ' \
+		+ self.lastline.strip()
+		newvals.append(message)
+		return newvals
 		# what if it's neither a header nor a poetry line?
 		
 	def emit_tweet(self):
