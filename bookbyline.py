@@ -14,6 +14,8 @@ a sqlite3 database, in the same directory as the text file.
 The module takes exactly two arguments: the file name (including path), and
 the text to match against in order to designate a header line. The second
 argument can be given as a single word, or a comma-separated list
+
+Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
 import sys
 import sqlite3
@@ -80,7 +82,7 @@ class BookFromTextFile:
 				self.connection.close()
 				sys.exit()
 		
-		# get the highest page number, and the line display offset
+		# get the highest page number, line number to display, last header
 		row = self.cursor.fetchone()
 		self.db_lastline = row[1]
 		self.db_curpos = row[1]
@@ -88,7 +90,7 @@ class BookFromTextFile:
 		self.prefix = row[3]
 				
 		# try to open the specified text file for reading
-		get_lines = list()
+		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
 				for a_line in t_file:
@@ -96,7 +98,7 @@ class BookFromTextFile:
 						continue
 						# if we encounter a blank line, skip it, and carry on
 					else:
-						get_lines.append(a_line)
+						self.lines.append(a_line)
 						# would it be more efficient to open, read one line,
 						# and store byte position?
 		except IOError:
@@ -104,7 +106,7 @@ class BookFromTextFile:
 			+ " Couldn't open text file for reading.")
 			sys.exit()
 		# Second slice index DOESN'T INCLUDE ITSELF
-		self.lines = get_lines[self.db_lastline:self.db_lastline + 2]
+		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
 	
 	
 	def format_tweet(self):
@@ -120,7 +122,7 @@ class BookFromTextFile:
 		#pattern="^blah"
 		#if re.search(pattern, input_string):
 		
-		# Match against any single member of self.headers
+		# match against any single member of self.headers
 		for i in self.headers:
 			try:
 				if self.lines[0].startswith(i):
@@ -130,13 +132,13 @@ class BookFromTextFile:
 					self.lines.append(self.lines[0].strip() + '\nl. ' \
 					+ str(self.displayline) + ': ' + self.lines[1].strip())
 					return self.lines
-			# Means we've reached the end of the file, most likely.
+			# means we've reached the end of the file, most likely.
 			except IndexError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Reached " + self.name \
 				+ " EOF on line " + str(self.db_lastline))
 				sys.exit()
-		# Proceed by using the latest untweeted line
+		# proceed by using the latest untweeted line
 		self.displayline += 1
 		self.lines.append(self.prefix + 'l. ' + str(self.displayline) + ': ' \
 		+ self.lines[0].strip())
