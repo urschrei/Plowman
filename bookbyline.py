@@ -42,9 +42,9 @@ class BookFromTextFile:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
 	A sqlite3 connection object is created, and an attempt it made to
-	retrieve a row matching from a DB matching the filename which was \
-	passed. If no DB is found, a new
-	DB is created and a table containing default values is inserted.
+	retrieve a row matching from a db matching the filename which was
+	passed. If no db is found, a new db is created and a table containing 
+	default values is inserted.
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
