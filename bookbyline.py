@@ -7,7 +7,7 @@
 # gmail: alighieribot2010/beatrice1265
 # 14348 lines
 """ 
-Tis module reads a text file from disk, and outputs properly-
+This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text. The line position is stored in
 a sqlite3 database, in the same directory as the text file.
@@ -115,15 +115,12 @@ class BookFromTextFile:
 		the line offset by 1. This means the line numbers don't jump when a
 		header is encountered, as the offset is subtracted from the display
 		line.
-		
 		Prints a properly-formatted string, either a canto or poetry line.
 		"""
 		#pattern="^blah"
 		#if re.search(pattern, input_string):
 		
 		# Match against any single member of self.headers
-		# Now we've got a problem, because if lines[-1] is a header,
-		# How do we skip it? We've already thrown away the other lines
 		for i in self.headers:
 			try:
 				if self.lines[0].startswith(i):
@@ -144,7 +141,6 @@ class BookFromTextFile:
 		self.lines.append(self.prefix + 'l. ' + str(self.displayline) + ': ' \
 		+ self.lines[0].strip())
 		return self.lines
-		# what if it's neither a header nor a poetry line?
 		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
@@ -179,7 +175,6 @@ class BookFromTextFile:
 				"Error was: " + str(err))
 				self.connection.rollback()
 		self.connection.close()
-
 
 
 # first argument (argv[0]) is always the filename – not what we want
