@@ -5,6 +5,7 @@
 
 # twitter: robo_dante/beatrice
 # gmail: alighieribot2010/beatrice1265
+# 14348 lines
 """ 
 Tis module reads a text file from disk, and outputs properly-
 formatted lines from it, one or two lines at a time, depending on
@@ -102,21 +103,11 @@ class BookFromTextFile:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file for reading.")
 			sys.exit()
-		# check that we haven't reached the end of the file
-		try:
-			self.lastline = get_lines[self.db_lastline]
-		except IndexError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-			str(sys.argv[0]) + " " + "Reached " + self.name + " EOF")
-			sys.exit()
-		# catch error if nextline would be past EOF
-		try:
-			self.nextline = get_lines[self.db_lastline + 1]
-		# This means we've reached the end of the file, so append "-- End"
-		except IndexError:
-			self.lastline = str(get_lines[self.db_lastline]) + "-- End"
-		
-	def format_tweet(self, newvals):
+		# Second slice index DOESN'T INCLUDE ITSELF
+		self.lines = get_lines[self.db_lastline:self.db_lastline + 2]
+	
+	
+	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
 		(see self.header_id), instead of displaying a line number,
@@ -131,24 +122,28 @@ class BookFromTextFile:
 		#if re.search(pattern, input_string):
 		
 		# Match against any single member of self.headers
+		# Now we've got a problem, because if lines[-1] is a header,
+		# How do we skip it? We've already thrown away the other lines
 		for i in self.headers:
-			if self.lastline.startswith(i):
-				self.db_lastline += 1
-				newvals.append(self.db_lastline)
-				self.prefix = str(self.lastline)
-				# reset display line to 1
-				self.displayline = 1
-				message = 'l. ' + str(self.displayline) + ': ' \
-				+ self.nextline.strip()
-				newvals.append(message)
-				return newvals
+			try:
+				if self.lines[0].startswith(i):
+					self.displayline = 1
+					self.db_lastline += 1
+					self.prefix = self.lines[0]
+					self.lines.append(self.lines[0].strip() + '\nl. ' \
+					+ str(self.displayline) + ': ' + self.lines[1].strip())
+					return self.lines
+			# Means we've reached the end of the file, most likely.
+			except IndexError:
+				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
+				str(sys.argv[0]) + " " + "Reached " + self.name \
+				+ " EOF on line " + str(self.db_lastline))
+				sys.exit()
 		# Proceed by using the latest untweeted line
-		newvals.append(self.db_lastline)
 		self.displayline += 1
-		message = 'l. ' + str(self.displayline) + ': ' \
-		+ self.lastline.strip()
-		newvals.append(message)
-		return newvals
+		self.lines.append(self.prefix + 'l. ' + str(self.displayline) + ': ' \
+		+ self.lines[0].strip())
+		return self.lines
 		# what if it's neither a header nor a poetry line?
 		
 	def emit_tweet(self):
@@ -162,21 +157,21 @@ class BookFromTextFile:
 		"""
 		# updates() will be filled with values which will be emitted
 		# following a successful DB update
-		updates = list()
-		self.format_tweet(updates)
+		self.format_tweet()
 		# don't print the line unless the DB is updateable
 		with self.connection:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
-				displayline = ?, header = ? WHERE position = ?',(updates[0] \
-				+ 1, self.displayline, self.prefix, self.db_curpos))
+				displayline = ?, header = ? WHERE position = ?', \
+				(self.db_lastline + 1, self.displayline, self.prefix, \
+				self.db_curpos))
 			except (sqlite3.OperationalError, IndexError):
 				print "Wasn't able to update the DB."
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Couldn't update the DB")
 				# logging.error("The tweet couldn't be sent")
 			try:
-				print self.prefix + str(updates[1])
+				print self.lines[-1]
 				#api.update_status(self.prefix + str(updates[1]))
 			except tweepy.TweepError , err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
