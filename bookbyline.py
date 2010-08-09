@@ -127,7 +127,8 @@ class BookFromTextFile:
 			try:
 				if self.lines[0].startswith(i):
 					self.displayline = 1
-					self.db_lastline += 1
+					# counter skips the next line, since we're tweeting it
+					self.db_lastline += 2
 					self.prefix = self.lines[0]
 					self.lines.append(self.lines[0].strip() + '\nl. ' \
 					+ str(self.displayline) + ': ' + self.lines[1].strip())
@@ -140,6 +141,8 @@ class BookFromTextFile:
 				sys.exit()
 		# proceed by using the latest untweeted line
 		self.displayline += 1
+		# move counter to the next line
+		self.db_lastline += 1
 		self.lines.append(self.prefix + 'l. ' + str(self.displayline) + ': ' \
 		+ self.lines[0].strip())
 		return self.lines
@@ -161,7 +164,7 @@ class BookFromTextFile:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
 				displayline = ?, header = ? WHERE position = ?', \
-				(self.db_lastline + 1, self.displayline, self.prefix, \
+				(self.db_lastline, self.displayline, self.prefix, \
 				self.db_curpos))
 			except (sqlite3.OperationalError, IndexError):
 				print "Wasn't able to update the DB."
