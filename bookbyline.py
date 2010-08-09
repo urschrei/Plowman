@@ -15,6 +15,7 @@ import sys
 import sqlite3
 import datetime
 import logging
+import hashlib
 log_filename = '/var/log/twitter_books.log'
 logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
@@ -35,7 +36,7 @@ class BookFromTextFile:
 	""" Create a Book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
-	A sqlite3 connection object is created, and an attempt it made to
+	A sqlite3 connection object is created, and an attempt is made to
 	retrieve a row matching from a db matching the filename which was
 	passed. If no db is found, a new db is created and a table containing 
 	default values is inserted.
@@ -46,20 +47,23 @@ class BookFromTextFile:
 		spt = self.name.split(".")
 		self.db_name = str(spt[0]) + ".db"
 		
-		# try to open the specified text file for reading
+		# try to open the specified text file to read, and get its SHA1 digest
 		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
+				tls = hashlib.sha1()
 				for a_line in t_file:
 					if not a_line.strip():
 						continue
 						# if we encounter a blank line, skip it, and carry on
 					else:
 						self.lines.append(a_line)
+						tls.update(a_line)
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file for reading.")
 			sys.exit()
+		self.sha = tls.hexdigest()
 			
 		# create a SQLite connection, or create a new db and table
 		try:
@@ -70,21 +74,25 @@ class BookFromTextFile:
 			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
-			self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
-			DESC LIMIT 1')
-		except sqlite3.OperationalError:
+			sv = (self.sha,)
+			self.cursor.execute \
+			('SELECT * FROM position WHERE digest = ?',sv)
+		except sqlite3.OperationalError, err:
+			print err
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't find the specified table. Creating…")
 			# set up a new blank table
-			self.cursor.execute('CREATE TABLE position (id 
-			INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER,
-			header STRING)')
-			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)' \
-			,(0, 0, ""))
-			self.cursor.commit()
+			print self.sha
+			self.cursor.execute('CREATE TABLE position \
+			(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
+			header STRING, digest DOUBLE)')
+			self.cursor.execute \
+			('INSERT INTO position VALUES \
+			(null, ?, ?, null, ?)',(0, 0, self.sha))
 			try:
-				self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
-				DESC LIMIT 1')
+				sv = (self.sha,)
+				self.cursor.execute \
+				('SELECT * FROM position WHERE digest = ?',sv)
 			except sqlite3.OperationalError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
 				+ "Still couldn't execute query. Insert statement problem?")
@@ -95,15 +103,29 @@ class BookFromTextFile:
 		
 		# get the highest page number, line number to display, last header
 		row = self.cursor.fetchone()
+		if row == None:
+			# no rows were returned, so insert default values with new digest
+			try:
+				self.cursor.execute \
+				('INSERT INTO position VALUES \
+				(null, ?, ?, null, ?)',(0, 0, self.sha))
+				# and select it
+				self.cursor.execute \
+				('SELECT * FROM position WHERE digest = ?',sv)
+				row = self.cursor.fetchone()
+			except sqlite3.OperationalError:
+				logging.error(now.strftime("%Y-%m-%d %H:%M") \
+				+ "Couldn't insert new row into db. Exiting")
+				# close the SQLite connection, and quit
+				self.connection.commit()
+				self.connection.close()
+				sys.exit()
 		self.db_lastline = row[1]
-		self.db_curpos = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-		
 		# Second slice index DOESN'T INCLUDE ITSELF
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
-	
-	
+		
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
@@ -152,9 +174,9 @@ class BookFromTextFile:
 		with self.connection:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
-				displayline = ?, header = ? WHERE position = ?', \
+				displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 				(self.db_lastline, self.displayline, self.prefix, \
-				self.db_curpos))
+				self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
 				print "Wasn't able to update the DB."
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
