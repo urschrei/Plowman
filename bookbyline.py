@@ -160,8 +160,7 @@ class BookFromTextFile:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Couldn't update the DB")
 			try:
-				print self.lines[-1]
-				#api.update_status(str(self.lines[-1]))
+				api.update_status(str(self.lines[-1]))
 			except tweepy.TweepError , err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Couldn't update status. " + \
