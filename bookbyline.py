@@ -76,11 +76,12 @@ class BookFromTextFile:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't find the specified table. Creating…")
 			# set up a new blank table
-			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
-			KEY, position INTEGER, header STRING)')
-			self.db_lastline = 0
+			self.cursor.execute('CREATE TABLE position (id 
+			INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER,
+			header STRING)')
 			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)' \
-			,(self.db_lastline, 0, ""))
+			,(0, 0, ""))
+			self.cursor.commit()
 			try:
 				self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
 				DESC LIMIT 1')
