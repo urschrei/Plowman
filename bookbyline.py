@@ -44,8 +44,7 @@ class BookFromTextFile:
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
 		self.headers = hid.split(",")
-		spt = self.name.split(".")
-		self.db_name = str(spt[0]) + ".db"
+		self.db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
 		self.lines = list()
@@ -64,6 +63,7 @@ class BookFromTextFile:
 			+ " Couldn't open text file for reading.")
 			sys.exit()
 		self.sha = tls.hexdigest()
+		sl_digest = (self.sha,)
 			
 		# create a SQLite connection, or create a new db and table
 		try:
@@ -74,48 +74,33 @@ class BookFromTextFile:
 			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
-			sv = (self.sha,)
 			self.cursor.execute \
-			('SELECT * FROM position WHERE digest = ?',sv)
-		except sqlite3.OperationalError, err:
-			print err
+			('SELECT * FROM position WHERE digest = ?',sl_digest)
+		except sqlite3.OperationalError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't find the specified table. Creating…")
+			+ " Couldn't find table \'position\'. Creating…")
 			# set up a new blank table
-			print self.sha
 			self.cursor.execute('CREATE TABLE position \
 			(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 			header STRING, digest DOUBLE)')
-			self.cursor.execute \
-			('INSERT INTO position VALUES \
-			(null, ?, ?, null, ?)',(0, 0, self.sha))
-			try:
-				sv = (self.sha,)
-				self.cursor.execute \
-				('SELECT * FROM position WHERE digest = ?',sv)
-			except sqlite3.OperationalError:
-				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ "Still couldn't execute query. Insert statement problem?")
-				# close the SQLite connection, and quit
-				self.connection.commit()
-				self.connection.close()
-				sys.exit()
 		
 		# get the highest page number, line number to display, last header
 		row = self.cursor.fetchone()
 		if row == None:
 			# no rows were returned, so insert default values with new digest
+			logging.error(now.strftime("%Y-%m-%d %H:%M") \
+			+ " New file with digest " + self.sha + " found. Inserting row…")
 			try:
 				self.cursor.execute \
 				('INSERT INTO position VALUES \
 				(null, ?, ?, null, ?)',(0, 0, self.sha))
 				# and select it
 				self.cursor.execute \
-				('SELECT * FROM position WHERE digest = ?',sv)
+				('SELECT * FROM position WHERE digest = ?',sl_digest)
 				row = self.cursor.fetchone()
 			except sqlite3.OperationalError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ "Couldn't insert new row into db. Exiting")
+				+ " Couldn't insert new row into db. Exiting")
 				# close the SQLite connection, and quit
 				self.connection.commit()
 				self.connection.close()
