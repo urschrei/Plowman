@@ -47,6 +47,7 @@ class BookFromTextFile:
 		self.db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
+		# we're creating the digest from non-blank lines only, just because
 		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
@@ -63,6 +64,7 @@ class BookFromTextFile:
 			+ " Couldn't open text file for reading.")
 			sys.exit()
 		self.sha = tls.hexdigest()
+		# the sqlite lib likes its variables formatted like this for selects
 		sl_digest = (self.sha,)
 			
 		# create a SQLite connection, or create a new db and table
@@ -84,7 +86,7 @@ class BookFromTextFile:
 			(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 			header STRING, digest DOUBLE)')
 		
-		# get the highest page number, line number to display, last header
+		# try to select the correct row, based on the SHA1 digest
 		row = self.cursor.fetchone()
 		if row == None:
 			# no rows were returned, so insert default values with new digest
@@ -105,10 +107,12 @@ class BookFromTextFile:
 				self.connection.commit()
 				self.connection.close()
 				sys.exit()
+		# set instance attrs from the db
 		self.db_lastline = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-		# Second slice index DOESN'T INCLUDE ITSELF
+		# now slice the lines list so we have the next two untweetd lines
+		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
 		
 	def format_tweet(self):
@@ -150,7 +154,7 @@ class BookFromTextFile:
 		""" First call the format_tweet() function, which correctly formats
 		the current object's line[] properties, depending
 		on what they are, then tweets them. It then writes the
-		updated position, line display offset, and header values to the db
+		updated position, line display offset, and header values to the db.
 		Appends the correctly-formatted line to the line[] list, so it can
 		be tweeted
 		"""
