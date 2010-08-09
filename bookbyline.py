@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# This is useful: http://openbookproject.net//thinkCSpy/
-# This, too: http://www.devshed.com/c/a/Python/Using-SQLite-in-Python/
-
-# twitter: robo_dante/beatrice
-# gmail: alighieribot2010/beatrice1265
-# 14348 lines
 """ 
 This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
@@ -27,7 +21,7 @@ now = datetime.datetime.now()
 
 # tweepy stuff
 import tweepy
-auth = tweepy.BasicAuthHandler('robo_dante', 'beatrice')
+auth = tweepy.BasicAuthHandler('user', 'pass')
 api = tweepy.API(auth, secure="True")
 
 if len(sys.argv) != 3:
@@ -51,12 +45,28 @@ class BookFromTextFile:
 		self.headers = hid.split(",")
 		spt = self.name.split(".")
 		self.db_name = str(spt[0]) + ".db"
+		
+		# try to open the specified text file for reading
+		self.lines = list()
+		try:
+			with open(self.name, "r") as t_file:
+				for a_line in t_file:
+					if not a_line.strip():
+						continue
+						# if we encounter a blank line, skip it, and carry on
+					else:
+						self.lines.append(a_line)
+		except IOError:
+			logging.error(now.strftime("%Y-%m-%d %H:%M") \
+			+ " Couldn't open text file for reading.")
+			sys.exit()
+			
 		# create a SQLite connection, or create a new db and table
 		try:
 			self.connection = sqlite3.connect(self.db_name)
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't create a DB. That's a show-stopper.")
+			+ " Couldn't read from, or create a db. That's a show-stopper.")
 			sys.exit()
 		self.cursor = self.connection.cursor()
 		try:
@@ -68,9 +78,9 @@ class BookFromTextFile:
 			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position (id INTEGER PRIMARY \
 			KEY, position INTEGER, header STRING)')
-			db_lastline = 0
+			self.db_lastline = 0
 			self.cursor.execute('INSERT INTO position VALUES (null, ?, ?, ?)' \
-			,(db_lastline, 0, ""))
+			,(self.db_lastline, 0, ""))
 			try:
 				self.cursor.execute('SELECT * FROM position ORDER BY POSITION \
 				DESC LIMIT 1')
@@ -88,23 +98,7 @@ class BookFromTextFile:
 		self.db_curpos = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-				
-		# try to open the specified text file for reading
-		self.lines = list()
-		try:
-			with open(self.name, "r") as t_file:
-				for a_line in t_file:
-					if not a_line.strip():
-						continue
-						# if we encounter a blank line, skip it, and carry on
-					else:
-						self.lines.append(a_line)
-						# would it be more efficient to open, read one line,
-						# and store byte position?
-		except IOError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't open text file for reading.")
-			sys.exit()
+		
 		# Second slice index DOESN'T INCLUDE ITSELF
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
 	
@@ -112,16 +106,13 @@ class BookFromTextFile:
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
-		(see self.header_id), instead of displaying a line number,
-		we join the next line and increment both the line number and
-		the line offset by 1. This means the line numbers don't jump when a
+		(see self.headers),
+		we join the next line and reset the line number to 0.
+		This means the line numbers don't jump when a
 		header is encountered, as the offset is subtracted from the display
 		line.
-		Prints a properly-formatted string, either a canto or poetry line.
+		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
-		#pattern="^blah"
-		#if re.search(pattern, input_string):
-		
 		# match against any single member of self.headers
 		for i in self.headers:
 			try:
@@ -133,7 +124,7 @@ class BookFromTextFile:
 					self.lines.append(self.lines[0].strip() + '\nl. ' \
 					+ str(self.displayline) + ': ' + self.lines[1].strip())
 					return self.lines
-			# means we've reached the end of the file, most likely.
+			# means we've reached the end of the file
 			except IndexError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Reached " + self.name \
@@ -149,17 +140,14 @@ class BookFromTextFile:
 		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
-		the current object's lastline and thisline properties, depending
-		on what they are, and then prints / tweets them. It then writes the
-		updated last line printed and line display offset values the DB
-		
-		Returns a list of values which are used to output the message and
-		update the DB
+		the current object's line[] properties, depending
+		on what they are, then tweets them. It then writes the
+		updated position, line display offset, and header values to the db
+		Appends the correctly-formatted line to the line[] list, so it can
+		be tweeted
 		"""
-		# updates() will be filled with values which will be emitted
-		# following a successful DB update
 		self.format_tweet()
-		# don't print the line unless the DB is updateable
+		# don't print the line unless the db is updateable
 		with self.connection:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
@@ -170,7 +158,6 @@ class BookFromTextFile:
 				print "Wasn't able to update the DB."
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
 				str(sys.argv[0]) + " " + "Couldn't update the DB")
-				# logging.error("The tweet couldn't be sent")
 			try:
 				print self.lines[-1]
 				#api.update_status(str(self.lines[-1]))
@@ -182,7 +169,7 @@ class BookFromTextFile:
 		self.connection.close()
 
 
-# first argument (argv[0]) is always the filename – not what we want
+# first argument (argv[0]) is the abs. path + filename -- not what we want
 input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
 input_book.emit_tweet()
 
