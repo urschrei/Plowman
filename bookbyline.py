@@ -94,7 +94,7 @@ class BookFromTextFile:
 		if row == None:
 			# no rows were returned, so insert default values with new digest
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " New file with digest %s found. Inserting row…") % (self.sha)
+			+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
 			try:
 				self.cursor.execute \
 				('INSERT INTO position VALUES \
