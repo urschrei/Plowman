@@ -4,7 +4,7 @@
 This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text. The line position is stored in
-a sqlite3 database, in the same directory as the text file.
+a sqlite3 database, which will be created in the current working directory.
 The module takes exactly two arguments: the file name (including path), and
 the text to match against in order to designate a header line. The second
 argument can be given as a single word, or a comma-separated list
@@ -16,6 +16,7 @@ import hashlib
 import sqlite3
 import datetime
 import logging
+import re
 
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
@@ -128,16 +129,16 @@ class BookFromTextFile:
 		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
 		# match against any single member of self.headers
-		for i in self.headers:
+		comped = re.compile("^(" + "|".join(self.headers) + ")")
+		if comped.search(self.lines[0]):
 			try:
-				if self.lines[0].startswith(i):
-					self.displayline = 1
-					# counter skips the next line, since we're tweeting it
-					self.db_lastline += 2
-					self.prefix = self.lines[0]
-					self.lines.append(self.lines[0].strip() + '\nl. ' \
-					+ str(self.displayline) + ': ' + self.lines[1].strip())
-					return self.lines
+				self.displayline = 1
+				# counter skips the next line, since we're tweeting it
+				self.db_lastline += 2
+				self.prefix = self.lines[0]
+				self.lines.append(self.lines[0].strip() + '\nl. ' \
+				+ str(self.displayline) + ': ' + self.lines[1].strip())
+				return self.lines
 			# means we've reached the end of the file
 			except IndexError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
@@ -184,6 +185,7 @@ class BookFromTextFile:
 
 
 # first argument (argv[0]) is the abs. path + filename -- not what we want
+print sys.argv[0]
 input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
 input_book.emit_tweet()
 
