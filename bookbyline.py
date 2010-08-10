@@ -54,18 +54,15 @@ class BookFromTextFile:
 		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
-				tls = hashlib.sha1()
-				for a_line in t_file:
-					if not a_line.strip():
-						continue
-						# if we encounter a blank line, skip it, and carry on
-					else:
-						self.lines.append(a_line)
-						tls.update(a_line)
+				rl = t_file.readlines()
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file for reading.")
 			sys.exit()
+		self.lines = [l for l in rl if l.strip()]
+		tls = hashlib.sha1()
+		for line in self.lines:
+			tls.update(line)
 		self.sha = tls.hexdigest()
 		# the sqlite lib likes its variables formatted like this for selects
 		sl_digest = (self.sha,)
