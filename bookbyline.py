@@ -31,8 +31,8 @@ api = tweepy.API(auth, secure="True")
 if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
 	bookbyline.py filename.txt header"
-	logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + str(sys.argv[0]) \
-	+ " " + "Incorrect number of arguments")
+	logging.error(now.strftime("%Y-%m-%d %H:%M") + " %s " +  \
+	+ " Incorrect number of arguments") % (str(sys.argv[0]))
 	sys.exit()
 
 class BookFromTextFile:
@@ -94,7 +94,7 @@ class BookFromTextFile:
 		if row == None:
 			# no rows were returned, so insert default values with new digest
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " New file with digest " + self.sha + " found. Inserting row…")
+			+ " New file with digest %s found. Inserting row…") % (self.sha)
 			try:
 				self.cursor.execute \
 				('INSERT INTO position VALUES \
@@ -114,7 +114,7 @@ class BookFromTextFile:
 		self.db_lastline = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-		# now slice the lines list so we have the next two untweetd lines
+		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
 		
@@ -136,8 +136,10 @@ class BookFromTextFile:
 				# counter skips the next line, since we're tweeting it
 				self.db_lastline += 2
 				self.prefix = self.lines[0]
-				self.lines.append(self.lines[0].strip() + '\nl. ' \
-				+ str(self.displayline) + ': ' + self.lines[1].strip())
+				ap = ('%s\nl. %s: %s') \
+				% (self.lines[0].strip(), str(self.displayline), \
+				self.lines[1].strip())
+				self.lines.append(ap)
 				return self.lines
 			# means we've reached the end of the file
 			except IndexError:
@@ -149,8 +151,9 @@ class BookFromTextFile:
 		self.displayline += 1
 		# move counter to the next line
 		self.db_lastline += 1
-		self.lines.append(self.prefix + 'l. ' + str(self.displayline) + ': ' \
-		+ self.lines[0].strip())
+		ap = ('%sl. %s: %s') \
+		% (self.prefix, self.displayline, self.lines[0].strip())
+		self.lines.append(ap)
 		return self.lines
 		
 	def emit_tweet(self):
@@ -176,11 +179,12 @@ class BookFromTextFile:
 			try:
 				#api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
-			except tweepy.TweepError , err:
-				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-				str(sys.argv[0]) + " " + "Couldn't update status. " + \
-				"Error was: " + str(err))
-				self.connection.rollback()
+			except tweepy.TweepError, err:
+				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
+				"%s Couldn't update status. Error was: %s") \
+				% (str(sys.argv[0]), err)
+				#self.connection.rollback()
+				sys.exit()
 		self.connection.close()
 
 
