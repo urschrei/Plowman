@@ -54,19 +54,15 @@ class BookFromTextFile:
 		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
-				rl = t_file.readlines()
+				get_lines = t_file.readlines()
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file for reading.")
 			sys.exit()
-		self.lines = [l for l in rl if l.strip()]
-		tls = hashlib.sha1()
-		for line in self.lines:
-			tls.update(line)
-		self.sha = tls.hexdigest()
-		# the sqlite lib likes its variables formatted like this for selects
+		self.lines = [l for l in get_lines if l.strip()]
+		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
-			
+		
 		# create a SQLite connection, or create a new db and table
 		try:
 			self.connection = sqlite3.connect(self.db_name)
@@ -133,10 +129,10 @@ class BookFromTextFile:
 				# counter skips the next line, since we're tweeting it
 				self.db_lastline += 2
 				self.prefix = self.lines[0]
-				ap = ('%s\nl. %s: %s') \
+				output_line = ('%s\nl. %s: %s') \
 				% (self.lines[0].strip(), str(self.displayline), \
 				self.lines[1].strip())
-				self.lines.append(ap)
+				self.lines.append(output_line)
 				return self.lines
 			# means we've reached the end of the file
 			except IndexError:
@@ -148,9 +144,9 @@ class BookFromTextFile:
 		self.displayline += 1
 		# move counter to the next line
 		self.db_lastline += 1
-		ap = ('%sl. %s: %s') \
+		output_line = ('%sl. %s: %s') \
 		% (self.prefix, self.displayline, self.lines[0].strip())
-		self.lines.append(ap)
+		self.lines.append(output_line)
 		return self.lines
 		
 	def emit_tweet(self):
