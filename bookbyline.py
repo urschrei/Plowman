@@ -184,8 +184,13 @@ class BookFromTextFile:
 		self.connection.close()
 
 
-# first argument (argv[0]) is the abs. path + filename -- not what we want
-print sys.argv[0]
-input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
-input_book.emit_tweet()
+def main():
+	""" main function
+	"""
+	# first argument (argv[0]) is the abs. path + filename -- not what we want
+	input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
+	input_book.emit_tweet()
+
+if __name__ == '__main__':
+	main()
 
