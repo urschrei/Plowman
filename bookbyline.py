@@ -162,9 +162,9 @@ class BookFromTextFile:
 				(self.db_lastline, self.displayline, self.prefix, \
 				self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
-				print "Wasn't able to update the DB."
+				print "Wasn't able to update the db."
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ " %s Couldn't update the DB") % (str(sys.argv[0]))
+				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
 				#api.update_status(str(self.lines[-1]))
