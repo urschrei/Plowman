@@ -114,10 +114,8 @@ class BookFromTextFile:
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
 		(see self.headers),
-		we join the next line and reset the line number to 0.
-		This means the line numbers don't jump when a
-		header is encountered, as the offset is subtracted from the display
-		line.
+		we join the next line and reset the line number to 1.
+		
 		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
 		# match against any single member of self.headers
@@ -150,11 +148,10 @@ class BookFromTextFile:
 		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
-		the current object's line[] properties, depending
-		on what they are, then tweets them. It then writes the
-		updated position, line display offset, and header values to the db.
-		Appends the correctly-formatted line to the line[] list, so it can
-		be tweeted
+		the current object's line[] members, depending
+		on what they are, then tweets the resulting string. It then writes the
+		updated file position, line display number, and header values to the
+		db
 		"""
 		self.format_tweet()
 		# don't print the line unless the db is updateable
