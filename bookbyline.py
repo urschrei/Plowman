@@ -51,13 +51,12 @@ class BookFromTextFile:
 		
 		# try to open the specified text file to read, and get its SHA1 digest
 		# we're creating the digest from non-blank lines only, just because
-		self.lines = list()
 		try:
 			with open(self.name, "r") as t_file:
 				get_lines = t_file.readlines()
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't open text file for reading.")
+			+ " Couldn't open text file %s for reading.") % (self.name)
 			sys.exit()
 		self.lines = [l for l in get_lines if l.strip()]
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
@@ -123,8 +122,8 @@ class BookFromTextFile:
 		"""
 		# match against any single member of self.headers
 		comped = re.compile("^(" + "|".join(self.headers) + ")")
-		if comped.search(self.lines[0]):
-			try:
+		try:
+			if comped.search(self.lines[0]):
 				self.displayline = 1
 				# counter skips the next line, since we're tweeting it
 				self.db_lastline += 2
@@ -134,12 +133,12 @@ class BookFromTextFile:
 				self.lines[1].strip())
 				self.lines.append(output_line)
 				return self.lines
-			# means we've reached the end of the file
-			except IndexError:
-				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-				str(sys.argv[0]) + " " + "Reached " + self.name \
-				+ " EOF on line " + str(self.db_lastline))
-				sys.exit()
+		# means we've reached the end of the file
+		except IndexError:
+			logging.error(now.strftime("%Y-%m-%d %H:%M") + \
+			" %s Reached %s EOF on line %s"
+			% (str(sys.argv[0]), self.name, str(self.db_lastline)))
+			sys.exit()
 		# proceed by using the latest untweeted line
 		self.displayline += 1
 		# move counter to the next line
@@ -166,15 +165,16 @@ class BookFromTextFile:
 				(self.db_lastline, self.displayline, self.prefix, \
 				self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
-				print "Wasn't able to update the db."
-				logging.error(now.strftime("%Y-%m-%d %H:%M") + " " + \
-				str(sys.argv[0]) + " " + "Couldn't update the db")
+				print "Wasn't able to update the DB."
+				logging.error(now.strftime("%Y-%m-%d %H:%M") \
+				+ " %s Couldn't update the DB") % (str(sys.argv[0]))
+				sys.exit()
 			try:
 				#api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
 			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
-				"%s Couldn't update status. Error was: %s") \
+				" %s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
 				#self.connection.rollback()
 				sys.exit()
