@@ -11,12 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys
-import hashlib
-import sqlite3
-import datetime
-import logging
-import re
+import sys, hashlib, sqlite3, datetime, logging, re
 
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
@@ -24,9 +19,9 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
 
 # tweepy stuff
-import tweepy
-auth = tweepy.BasicAuthHandler('user', 'pass')
-api = tweepy.API(auth, secure="True")
+from tweepy import BasicAuthHandler, API, TweepError
+auth = BasicAuthHandler('user', 'pass')
+api = API(auth, secure="True")
 
 if len(sys.argv) != 3:
 	print "Incorrect number of arguments. Please call the script like this: \
@@ -168,7 +163,7 @@ class BookFromTextFile:
 			try:
 				#api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
-			except tweepy.TweepError, err:
+			except TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
