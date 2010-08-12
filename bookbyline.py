@@ -40,9 +40,8 @@ class BookFromTextFile:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
 	A sqlite3 connection object is created, and an attempt is made to
-	retrieve a row matching from a db matching the filename which was
-	passed. If no db is found, a new db is created and a table containing 
-	default values is inserted.
+	retrieve a row from a db matching the filename which was
+	passed. If no db is found, a new db, table and row are created.
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
@@ -97,7 +96,7 @@ class BookFromTextFile:
 				row = self.cursor.fetchone()
 			except sqlite3.OperationalError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ " Couldn't insert new row into db. Exiting")
+				+ " Couldn't insert new row into table. Exiting")
 				# close the SQLite connection, and quit
 				self.connection.commit()
 				self.connection.close()
