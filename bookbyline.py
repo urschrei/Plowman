@@ -23,13 +23,6 @@ from tweepy import BasicAuthHandler, API, TweepError
 auth = BasicAuthHandler('user', 'pass')
 api = API(auth, secure="True")
 
-if len(sys.argv) != 3:
-	print "Incorrect number of arguments. Please call the script like this: \
-	bookbyline.py filename.txt header"
-	logging.error(now.strftime("%Y-%m-%d %H:%M") + " %s " +  \
-	+ " Incorrect number of arguments") % (str(sys.argv[0]))
-	sys.exit()
-
 class BookFromTextFile:
 	""" Create a Book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
@@ -176,8 +169,15 @@ def main():
 	""" main function
 	"""
 	# first argument (argv[0]) is the abs. path + filename -- not what we want
+	if len(sys.argv) != 3:
+		print "Incorrect number of arguments. Please call the script like this: \
+		bookbyline.py filename.txt header"
+		logging.error(now.strftime("%Y-%m-%d %H:%M") + " %s " +  \
+		+ " Incorrect number of arguments") % (str(sys.argv[0]))
+		sys.exit()
 	input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
 	input_book.emit_tweet()
+
 
 if __name__ == '__main__':
 	main()
