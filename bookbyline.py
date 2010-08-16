@@ -11,22 +11,13 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, hashlib, sqlite3, tweepy, datetime, logging, re
+import sys, hashlib, sqlite3, tweepy, datetime, logging, re, getOauth
 
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
 logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
 
-# tweepy stuff
-consumer_key = "paste consumer key here"
-consumer_secret = "paste consumer secret here"
-access_key = "paste access key here"
-access_secret = "paste access secret here"
-
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_key, access_secret)
-api = tweepy.API(auth, secure=True)
 
 
 class BookFromTextFile:
@@ -72,7 +63,8 @@ class BookFromTextFile:
 			# set up a new blank table
 			self.cursor.execute('CREATE TABLE position \
 			(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-			header STRING, digest DOUBLE)')
+			header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
+			acckey STRING, accsecret STRING)')
 		
 		# try to select the correct row, based on the SHA1 digest
 		row = self.cursor.fetchone()
@@ -81,9 +73,18 @@ class BookFromTextFile:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
 			try:
+				# create a dictionary of OAuth values
+				try:
+					oa_vals = []
+					getOauth.get_creds(oa_vals)
+				except tweepy.error.TweepError:
+					print "Couldn't complete OAuth process. Fatal. Exiting."
+					self.connection.rollback()
+					sys.exit()
 				self.cursor.execute \
 				('INSERT INTO position VALUES \
-				(null, ?, ?, null, ?)',(0, 0, self.sha))
+				(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
+				oa_vals[0], oa_vals[1], oa_vals[2], oa_vals[3]))
 				# and select it
 				self.cursor.execute \
 				('SELECT * FROM position WHERE digest = ?',sl_digest)
@@ -99,6 +100,11 @@ class BookFromTextFile:
 		self.db_lastline = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
+		self.consumer_key = row[5]
+		self.consumer_secret = row[6]
+		self.access_key = row[7]
+		self.access_secret = row[8]
+		
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
@@ -147,6 +153,9 @@ class BookFromTextFile:
 		db
 		"""
 		self.format_tweet()
+		auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_secret)
+		auth.set_access_token(self.access_key, self.access_secret)
+		api = tweepy.API(auth, secure=True)
 		# don't print the line unless the db is updateable
 		with self.connection:
 			try:
@@ -169,8 +178,8 @@ class BookFromTextFile:
 				#self.connection.rollback()
 				sys.exit()
 		self.connection.close()
-
-
+		
+			
 def main():
 	""" main function
 	"""
