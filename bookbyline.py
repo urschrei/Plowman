@@ -19,14 +19,14 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
 
 # tweepy stuff
-consumer_key = "f55Lgt09uPzE4lixEAqL2g"
-consumer_secret = "gm8FqlH2rREXSREWwybuePY7zZOrJxjTNJa4pPps"
-access_key = "174466389-zkxLF8n62VmzoVz2FpDWa4xzKheJx8Q4KDFKAZoB"
-access_secret = "ScMgx4lzRq4pW3Z2hy8mS9iXp7nPiuXp5BWBRTaVKco"
+consumer_key = "paste consumer key here"
+consumer_secret = "paste consumer secret here"
+access_key = "paste access key here"
+access_secret = "paste access secret here"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_key, access_secret)
-api = tweepy.API(auth)
+api = tweepy.API(auth, secure=True)
 
 
 class BookFromTextFile:
@@ -160,9 +160,9 @@ class BookFromTextFile:
 				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
-				api.update_status(str(self.lines[-1]))
+				# api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
-			except TweepError, err:
+			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
