@@ -11,7 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, hashlib, sqlite3, datetime, logging, re
+import sys, hashlib, sqlite3, tweepy, datetime, logging, re
 
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
@@ -19,9 +19,15 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR)
 now = datetime.datetime.now()
 
 # tweepy stuff
-from tweepy import BasicAuthHandler, API, TweepError
-auth = BasicAuthHandler('user', 'pass')
-api = API(auth, secure="True")
+consumer_key = "f55Lgt09uPzE4lixEAqL2g"
+consumer_secret = "gm8FqlH2rREXSREWwybuePY7zZOrJxjTNJa4pPps"
+access_key = "174466389-zkxLF8n62VmzoVz2FpDWa4xzKheJx8Q4KDFKAZoB"
+access_secret = "ScMgx4lzRq4pW3Z2hy8mS9iXp7nPiuXp5BWBRTaVKco"
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_key, access_secret)
+api = tweepy.API(auth)
+
 
 class BookFromTextFile:
 	""" Create a Book object from a text file. Takes two arguments:
@@ -86,7 +92,7 @@ class BookFromTextFile:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
 				+ " Couldn't insert new row into table. Exiting")
 				# close the SQLite connection, and quit
-				self.connection.commit()
+				self.connection.rollback()
 				self.connection.close()
 				sys.exit()
 		# set instance attrs from the db
@@ -154,7 +160,7 @@ class BookFromTextFile:
 				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
-				#api.update_status(str(self.lines[-1]))
+				api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
 			except TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
