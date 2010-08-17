@@ -194,19 +194,16 @@ def main():
 
 
 if __name__ == "__main__":
-	# only do comprehensive error handling if running in standalone mode
-	# thanks to Brad Wright (github.com/bradleywright) for this
-		try:
-		    main()
-		except (KeyboardInterrupt, SystemExit):
-		    # actually raise these so it exits cleanly
-		    raise 
-		except Exception, error:
-		    # all other exceptions, so display the error
-		    print error 
-		else:
-		    pass
-		finally:
-		    # exit once we've done everything else
-		    sys.exit(0)
-
+	try:
+		main()
+	except (KeyboardInterrupt, SystemExit):
+		# actually raise these so it exits cleanly
+		raise
+	except Exception, error:
+		# all other exceptions, so display the error
+		print error 
+	else:
+		pass
+	finally:
+		# exit cleanly once we've done everything else
+		sys.exit(0)
