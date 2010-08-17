@@ -30,7 +30,7 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 7. On the next page, look for the following: `Consumer Key` and `Consumer Secret`. Copy the key, switch back to the terminal and paste it at the prompt, then press return. Repeat this process with the secret.
 8. The browser will then be redirected to a page asking you if you would like to allow the application name you chose in step 5 to connect to your account. Click `allow`. You may wish to note the Consumer Key and Secret, as they can be used to re-authorise your application, should it become necessary.
 9. On the next page, you will see a PIN. Copy this, switch back to the terminal, and paste it at the prompt, then press return. An `Access Key` and `Access Secret` will be displayed, the script will complete its initial setup, and tweet the first line of your chosen poem.
-10. You may now add the command detailed in step 2 to your crontab if you wish it to be fully automated, or call it from the command line whenever you like.
+10. You may now add the command detailed in step 3 to your crontab if you wish it to be fully automated, or call it from the command line whenever you like.
 11. You should see a new file, `tweet_books.sl3` in your home directory. This contains various settings and access keys for the account you just set up. If you remove it, or alter its contents, the script will reset, and you'll have to regenerate OAuth credentials. Don't move it unless you know what you're doing.
 
 [tweepy]: http://github.com/joshthecoder/tweepy
