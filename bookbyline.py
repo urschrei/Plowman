@@ -73,14 +73,17 @@ class BookFromTextFile:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
 			try:
-				# create a dictionary of OAuth values
+				# attempt to create OAuth credentials
 				try:
 					oa_vals = []
 					getOauth.get_creds(oa_vals)
 				except tweepy.error.TweepError:
 					print "Couldn't complete OAuth process. Fatal. Exiting."
+					logging.error(now.strftime("%Y-%m-%d %H:%M") \
+					+ " Couldn't complete OAuth setup. Unable to continue.")
 					self.connection.rollback()
 					sys.exit()
+				
 				self.cursor.execute \
 				('INSERT INTO position VALUES \
 				(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
@@ -169,7 +172,7 @@ class BookFromTextFile:
 				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
-				# api.update_status(str(self.lines[-1]))
+				#api.update_status(str(self.lines[-1]))
 				print self.lines[-1]
 			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# coding=utf-8
 import webbrowser
 import sys
 import tweepy
@@ -9,37 +11,43 @@ import tweepy
 
 
 def get_creds(creds):
-	""" docstring
+	""" Obtain and return OAuth credentials from twitter.com
+	Takes an empty list, and returns a list containing:
+	consumer key
+	consumer secret
+	access key
+	access secret
 	"""
 	print """I will now attempt to open a web browser to create an OAuth key.
 	If you have previously obtained a consumer key and secret, you may close
-	the browser window, and enter them here. Otherwise, follow the
+	the browser window, and enter them below. Otherwise, follow the
 	instructions on screen, and refer to
 	http://jmillerinc.com/2010/05/31/twitter-from-the-command-line
 	-in-python-using-oauth/
-	for instructions.
+	for hints. Be sure to choose "client", and "read/write access"
 	
-	You may manually access the page at: https://dev.twitter.com/apps/new"""
-	
-	webbrowser.open(\
-	"http://jmillerinc.com/2010/05/31/twitter-from-the-command\
-	-line-in-python-using-oauth/")
+	You may manually access the page at: https://dev.twitter.com/apps/new
+	"""
+	inp = raw_input("Press Enter to continue, or q to quit...")
+	if inp == "q":
+		print "Abandoning OAuth process."
+		raise tweepy.error.TweepError("OAuth Abandoned")
 	webbrowser.open("http://dev.twitter.com/apps/new")
 	creds.append(raw_input('Consumer key: ').strip())
 	creds.append(raw_input('Consumer secret: ').strip())
 	autho = tweepy.OAuthHandler(creds[0], creds[1])
 	
-	# Open authorization URL in browser
+	# open authorisation URL in browser
 	try:
 		webbrowser.open(autho.get_authorization_url())
 	except 	tweepy.error.TweepError:
 		raise
-	# Ask user for verifier pin
+	# ask user for verification pin
 	pin = raw_input('Verification pin number from twitter.com: ').strip()
-	# Get access token
+	# get access token
 	token = autho.get_access_token(verifier=pin)
 
-	# Give user the access token
+	# give user the access token
 	print 'Access token:'
 	print '  Key: %s' % token.key
 	print '  Secret: %s' % token.secret
