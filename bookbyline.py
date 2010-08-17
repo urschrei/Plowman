@@ -76,7 +76,7 @@ class BookFromTextFile:
 				# attempt to create OAuth credentials
 				try:
 					oa_vals = []
-					getOauth.get_creds(oa_vals)
+					getOAuth.get_creds(oa_vals)
 				except tweepy.error.TweepError:
 					print "Couldn't complete OAuth process. Fatal. Exiting."
 					logging.error(now.strftime("%Y-%m-%d %H:%M") \
