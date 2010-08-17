@@ -38,12 +38,11 @@ class BookFromTextFile:
 		# we're creating the digest from non-blank lines only, just because
 		try:
 			with open(self.name, "r") as t_file:
-				get_lines = t_file.readlines()
+				self.lines = [line for line in t_file if line.strip()]
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file %s for reading.") % (self.name)
 			sys.exit()
-		self.lines = [l for l in get_lines if l.strip()]
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
 
