@@ -5,8 +5,8 @@ import sys
 import tweepy
 
 """
-    Query the user for their consumer key/secret
-    then attempt to fetch a valid access token.
+Attempt to obtain a consumer key/secret,
+then attempt to fetch a valid access token.
 """
 
 
@@ -43,7 +43,7 @@ def get_creds(creds):
 	except 	tweepy.error.TweepError:
 		raise
 	# ask user for verification pin
-	pin = raw_input('Verification pin number from twitter.com: ').strip()
+	pin = raw_input('Verification PIN from twitter.com: ').strip()
 	# get access token
 	token = autho.get_access_token(verifier=pin)
 
@@ -54,3 +54,18 @@ def get_creds(creds):
 	creds.append(token.key)
 	creds.append(token.secret)
 	return creds
+	
+
+def main():
+	""" main function
+	"""
+	oac = []
+	get_creds(oac)
+	print "Consumer key: %s" % oac[0]
+	print "Consumer secret: %s" % oac[1]
+	print "Access key: %s" % oac[2]
+	print "Access secret: %s" % oac[3]
+
+
+if __name__ == '__main__':
+	main()
