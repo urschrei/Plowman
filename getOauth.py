@@ -25,7 +25,7 @@ def get_creds(creds):
 	http://jmillerinc.com/2010/05/31/twitter-from-the-command-line
 	-in-python-using-oauth/
 	for hints. Be sure to choose "client", and "read/write access"
-	
+
 	You may manually access the page at: https://dev.twitter.com/apps/new
 	"""
 	inp = raw_input("Press Enter to continue, or q to quit...")
@@ -36,7 +36,7 @@ def get_creds(creds):
 	creds.append(raw_input('Consumer key: ').strip())
 	creds.append(raw_input('Consumer secret: ').strip())
 	autho = tweepy.OAuthHandler(creds[0], creds[1])
-	
+
 	# open authorisation URL in browser
 	try:
 		webbrowser.open(autho.get_authorization_url())
@@ -54,7 +54,7 @@ def get_creds(creds):
 	creds.append(token.key)
 	creds.append(token.secret)
 	return creds
-	
+
 
 def main():
 	""" main function
