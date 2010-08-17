@@ -77,4 +77,4 @@ if __name__ == '__main__':
 	    pass
 	finally:
 	    # exit once we've done everything else
-	    sys.exit()
+	    sys.exit(0)
