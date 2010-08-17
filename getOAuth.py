@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 """
+A wrapper for tweepy's OAuth functionality:
 Attempt to obtain a consumer key/secret,
 then attempt to fetch a valid access token.
 """
