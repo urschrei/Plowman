@@ -11,7 +11,7 @@ In order to authorise and make use of the script, you will require *OAuth API ac
 These setup steps assume that you are familiar with a terminal, and that you have a terminal window open.
 
 1. If you haven't already done so, download and install [tweepy], and sign up for a [Twitter] account
-2. Copy `bookbyline.py`, `getOAuth.py` and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been [chmod]ded `a+x`
+2. Copy `bookbyline.py`, `getOAuth.py`, and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been [chmod]ded `a+x`
 3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py /path/to/text.txt header_1,header_2,…header_n`, where "header_n" are strings which are to be considered "header" lines.
 	* example: `python mydir/bookbyline.py mydir/assets/poem.txt Inferno:,Purgatory:,Paradise:`
 4. When you first run the script, you will be prompted to create OAuth credentials, and the script will attempt to open your default browser on the <https://dev.twitter.com/apps/new> page.
