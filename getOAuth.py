@@ -29,9 +29,9 @@ def get_creds(creds):
 		print "Abandoning OAuth process."
 		raise tweepy.TweepError("OAuth process was abandoned")
 	webbrowser.open("http://dev.twitter.com/apps/new")
-	creds.append(raw_input('Consumer Key: ').strip())
-	creds.append(raw_input('Consumer Secret: ').strip())
-	autho = tweepy.OAuthHandler(creds[0], creds[1])
+	creds["conkey"] = (raw_input('Consumer Key: ').strip())
+	creds["consecret"] = (raw_input('Consumer Secret: ').strip())
+	autho = tweepy.OAuthHandler(creds["conkey"], creds["consecret"])
 
 	# open authorisation URL in browser
 	try:
@@ -47,20 +47,20 @@ def get_creds(creds):
 	print "Access token: "
 	print "  Key: %s" % token.key
 	print "  Secret: %s" % token.secret
-	creds.append(token.key)
-	creds.append(token.secret)
+	creds["acckey"] = token.key
+	creds["accsecret"] = token.secret
 	return creds
 
 
 def main():
 	""" main function
 	"""
-	oac = []
+	oac = {}
 	get_creds(oac)
-	print "Consumer key: %s" % oac[0]
-	print "Consumer secret: %s" % oac[1]
-	print "Access key: %s" % oac[2]
-	print "Access secret: %s" % oac[3]
+	print "Consumer key: %s" % oac["conkey"]
+	print "Consumer secret: %s" % oac["consecret"]
+	print "Access key: %s" % oac["acckey"]
+	print "Access secret: %s" % oac["accsecret"]
 
 
 if __name__ == '__main__':  

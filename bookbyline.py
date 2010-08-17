@@ -77,7 +77,7 @@ class BookFromTextFile:
 				try:
 					# attempt to create OAuth credentials
 					try:
-						oa_vals = []
+						oa_vals = {}
 						getOAuth.get_creds(oa_vals)
 					except tweepy.TweepError:
 						print "Couldn't complete OAuth setup. Fatal. Exiting."
@@ -87,7 +87,8 @@ class BookFromTextFile:
 					self.cursor.execute \
 					('INSERT INTO position VALUES \
 					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
-					oa_vals[0], oa_vals[1], oa_vals[2], oa_vals[3]))
+					oa_vals["conkey"], oa_vals["consecret"],\
+					oa_vals["acckey"], oa_vals["accsecret"]))
 					# and select it
 					self.cursor.execute \
 					('SELECT * FROM position WHERE digest = ?',sl_digest)
