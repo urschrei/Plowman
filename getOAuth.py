@@ -26,7 +26,7 @@ def get_creds(creds):
 	inp = raw_input("Press Return to continue, or q then Return to quit...")
 	if inp == "q":
 		print "Abandoning OAuth process."
-		raise tweepy.TweepError("OAuth Abandoned")
+		raise tweepy.TweepError("OAuth process was abandoned")
 	webbrowser.open("http://dev.twitter.com/apps/new")
 	creds.append(raw_input('Consumer Key: ').strip())
 	creds.append(raw_input('Consumer Secret: ').strip())
@@ -62,11 +62,19 @@ def main():
 	print "Access secret: %s" % oac[3]
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':  
+# only do comprehensive error handling if running in standalone mode
+# thanks to Brad Wright (github.com/bradleywright) for this
 	try:
-		main()
-	# we're only calling sys.exit() if running in standalone mode
-	# thanks to Brad (github.com/bradleywright) for this
-	except (KeyboardInterrupt, tweepy.TweepError): 
-	        # actually raise these so it exits cleanly 
-	        sys.exit()
+	    main()
+	except (KeyboardInterrupt, SystemExit):
+	    # actually raise these so it exits cleanly
+	    raise 
+	except Exception, error:
+	    # all other exceptions, so display the error
+	    print error 
+	else:
+	    pass
+	finally:
+	    # exit once we've done everything else
+	    sys.exit()
