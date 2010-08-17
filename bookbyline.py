@@ -11,7 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, hashlib, sqlite3, tweepy, datetime, logging, re, getOauth
+import sys, hashlib, sqlite3, tweepy, datetime, logging, re, getOAuth
 
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
@@ -77,7 +77,7 @@ class BookFromTextFile:
 				try:
 					oa_vals = []
 					getOAuth.get_creds(oa_vals)
-				except tweepy.error.TweepError:
+				except tweepy.TweepError:
 					print "Couldn't complete OAuth process. Fatal. Exiting."
 					logging.error(now.strftime("%Y-%m-%d %H:%M") \
 					+ " Couldn't complete OAuth setup. Unable to continue.")

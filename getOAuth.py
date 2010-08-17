@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
-import webbrowser
-import sys
-import tweepy
-
 """
 Attempt to obtain a consumer key/secret,
 then attempt to fetch a valid access token.
 """
+import webbrowser
+import tweepy
 
 
 def get_creds(creds):
@@ -31,7 +29,7 @@ def get_creds(creds):
 	inp = raw_input("Press Enter to continue, or q to quit...")
 	if inp == "q":
 		print "Abandoning OAuth process."
-		raise tweepy.error.TweepError("OAuth Abandoned")
+		raise tweepy.TweepError("OAuth Abandoned")
 	webbrowser.open("http://dev.twitter.com/apps/new")
 	creds.append(raw_input('Consumer key: ').strip())
 	creds.append(raw_input('Consumer secret: ').strip())
@@ -40,7 +38,7 @@ def get_creds(creds):
 	# open authorisation URL in browser
 	try:
 		webbrowser.open(autho.get_authorization_url())
-	except 	tweepy.error.TweepError:
+	except 	tweepy.TweepError:
 		raise
 	# ask user for verification pin
 	pin = raw_input('Verification PIN from twitter.com: ').strip()
