@@ -6,7 +6,7 @@ then attempt to fetch a valid access token.
 """
 import webbrowser
 import tweepy
-
+import sys
 
 def get_creds(creds):
 	""" Obtain and return OAuth credentials from twitter.com
@@ -28,8 +28,8 @@ def get_creds(creds):
 		print "Abandoning OAuth process."
 		raise tweepy.TweepError("OAuth Abandoned")
 	webbrowser.open("http://dev.twitter.com/apps/new")
-	creds.append(raw_input('Consumer key: ').strip())
-	creds.append(raw_input('Consumer secret: ').strip())
+	creds.append(raw_input('Consumer Key: ').strip())
+	creds.append(raw_input('Consumer Secret: ').strip())
 	autho = tweepy.OAuthHandler(creds[0], creds[1])
 
 	# open authorisation URL in browser
@@ -63,4 +63,10 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	try:
+		main()
+	# we're only calling sys.exit() if running in standalone mode
+	# thanks to Brad (github.com/bradleywright) for this
+	except (KeyboardInterrupt, tweepy.TweepError): 
+	        # actually raise these so it exits cleanly 
+	        sys.exit()

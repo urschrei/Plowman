@@ -10,22 +10,23 @@ In order to authorise the script, *you will require a valid [twitter] account, a
 
 These setup steps assume that you are familiar with a terminal, and that you have a terminal window open.
 
-1. Copy bookbyline.py, getOAuth.py and the text file containing your poem in a directory of your choosing (cron should be able to access it). Ensure that both of the files have been chmodded a+x.
+1. Copy `bookbyline.py`, `getOAuth.py` and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been chmodded a+x.
 2. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py /path/to/text.txt header_1,header_2,…header_n`, where "header_n" are strings which are to be considered "header" lines.
 3. When you first run the script, you will be prompted to create OAuth credentials, and the script will attempt to open your default browser on the <https://dev.twitter.com/apps/new> page.
 4. Once you have signed into Twitter, you will have to complete a form with the following fields:
 	1. `Application Name:` this is the name of the application which will appear in your tweets, feel free to personalise it
 	2. `Description:` enter a brief description of what this application does
-	3. `Application Website:` if you wish to point your bot's followers at a particular website, enter its URL here. Alternatively, you may wish to enter the GitHub repository's URL
-	4. `Organization:` if you are an organisation, say so here
+	3. `Application Website:` if you wish to point your bot's followers at a particular website, enter its URL here. Alternatively, you may wish to enter the Plowman GitHub repository's URL
+	4. `Organization:` if you are part of an organisation, enter its name here
 	5. `Website:` if you or your organisation have a website, enter its URL here
 	6. `Application Type:` **ensure that this is set to `client`**
 	7. `Callback URL:` leave this blank
 	8. `Default Access type:` **ensure that this is set to `Read & Write`**
-	9. `Use Twitter for login:`leave this unchecked
+	9. `Use Twitter for login:` leave this unchecked
 5. Now, complete the Captcha, and press the `save` button.
-6. On the next page, look for the following: `Consumer Key` and `Consumer Secret`. Copy the first, then switch back to the terminal, and paste it at the prompt, then press return. Repeat this process. The browser will then be redirected to a page asking you if you would like to allow the application name you just chose to connect to your account. Click `allow`. You may wish to note the Consumer key and secret, as they can be used to re-authorise your application, should it become necessary.
-7. On the next page, you will see a PIN. Copy this, switch back to the terminal, and paste it, then press return. An `Access Key` and `Secret` will be displayed, the terminal will complete its initial setup, and tweet the first line of your chosen poem.
+6. On the next page, look for the following: `Consumer Key` and `Consumer Secret`. Copy the first, then switch back to the terminal and paste it at the prompt, then press return. Repeat this process with the secret. 
+7. The browser will then be redirected to a page asking you if you would like to allow the application name you just chose to connect to your account. Click `allow`. You may wish to note the Consumer Key and Secret, as they can be used to re-authorise your application, should it become necessary.
+7. On the next page, you will see a PIN. Copy this, switch back to the terminal, and paste it, then press return. An `Access Key` and `Access Secret` will be displayed, the terminal will complete its initial setup, and tweet the first line of your chosen poem.
 8. You may now add the command detailed in step 2 to your crontab if you wish it to be fully automated, or call it from the command line whenever you like.
 9. You should see a new file, `tweet_books.sl3` in your home directory. This contains various settings and access keys for the account you just set up. If you remove it, or alter its contents, the script will reset, and you'll have to set up a new OAuth instance. Don't move it unless you know what you're doing.
 
