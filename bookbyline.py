@@ -21,12 +21,13 @@ now = datetime.datetime.now()
 
 
 class BookFromTextFile:
-	""" Create a Book object from a text file. Takes two arguments:
+	""" Create a book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
 	2. a string used to identify header lines
 	A sqlite3 connection object is created, and an attempt is made to
 	retrieve a row from a db matching the filename which was
-	passed. If no db is found, a new db, table and row are created.
+	passed. If no db is found, a new db, table, row and OAuth credentials
+	are created.
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.name = fname
@@ -53,52 +54,49 @@ class BookFromTextFile:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't read from, or create a db. That's a show-stopper.")
 			sys.exit()
-		self.cursor = self.connection.cursor()
-		try:
-			self.cursor.execute \
-			('SELECT * FROM position WHERE digest = ?',sl_digest)
-		except sqlite3.OperationalError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't find table \'position\'. Creating…")
-			# set up a new blank table
-			self.cursor.execute('CREATE TABLE position \
-			(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-			header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
-			acckey STRING, accsecret STRING)')
-		
-		# try to select the correct row, based on the SHA1 digest
-		row = self.cursor.fetchone()
-		if row == None:
-			# no rows were returned, so insert default values with new digest
-			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
+		with self.connection:
+			self.cursor = self.connection.cursor()
 			try:
-				# attempt to create OAuth credentials
-				try:
-					oa_vals = []
-					getOAuth.get_creds(oa_vals)
-				except tweepy.TweepError:
-					print "Couldn't complete OAuth process. Fatal. Exiting."
-					logging.error(now.strftime("%Y-%m-%d %H:%M") \
-					+ " Couldn't complete OAuth setup. Unable to continue.")
-					self.connection.rollback()
-					sys.exit()
-				
-				self.cursor.execute \
-				('INSERT INTO position VALUES \
-				(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
-				oa_vals[0], oa_vals[1], oa_vals[2], oa_vals[3]))
-				# and select it
 				self.cursor.execute \
 				('SELECT * FROM position WHERE digest = ?',sl_digest)
-				row = self.cursor.fetchone()
 			except sqlite3.OperationalError:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ " Couldn't insert new row into table. Exiting")
-				# close the SQLite connection, and quit
-				self.connection.rollback()
-				self.connection.close()
-				sys.exit()
+				+ " Couldn't find table \'position\'. Creating…")
+				# set up a new blank table
+				self.cursor.execute('CREATE TABLE position \
+				(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
+				header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
+				acckey STRING, accsecret STRING)')
+		
+			# try to select the correct row, based on the SHA1 digest
+			row = self.cursor.fetchone()
+			if row == None:
+				# no rows were returned, so insert default values with new digest
+				logging.error(now.strftime("%Y-%m-%d %H:%M") \
+				+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
+				try:
+					# attempt to create OAuth credentials
+					try:
+						oa_vals = []
+						getOAuth.get_creds(oa_vals)
+					except tweepy.TweepError:
+						print "Couldn't complete OAuth setup. Fatal. Exiting."
+						logging.error(now.strftime("%Y-%m-%d %H:%M") \
+						+ " Couldn't complete OAuth setup. Unable to continue.")
+						sys.exit()
+					self.cursor.execute \
+					('INSERT INTO position VALUES \
+					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
+					oa_vals[0], oa_vals[1], oa_vals[2], oa_vals[3]))
+					# and select it
+					self.cursor.execute \
+					('SELECT * FROM position WHERE digest = ?',sl_digest)
+					row = self.cursor.fetchone()
+				except sqlite3.OperationalError:
+					logging.error(now.strftime("%Y-%m-%d %H:%M") \
+					+ " Couldn't insert new row into table. Exiting")
+					# close the SQLite connection, and quit
+					sys.exit()
 		# set instance attrs from the db
 		self.db_lastline = row[1]
 		self.displayline = row[2]
@@ -107,11 +105,11 @@ class BookFromTextFile:
 		self.consumer_secret = row[6]
 		self.access_key = row[7]
 		self.access_secret = row[8]
-		
+
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
-		
+
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
 		line, or a poetry line. If the current line is a header
@@ -178,11 +176,9 @@ class BookFromTextFile:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
-				#self.connection.rollback()
 				sys.exit()
-		self.connection.close()
-		
-			
+
+
 def main():
 	""" main function
 	"""
@@ -197,6 +193,6 @@ def main():
 	input_book.emit_tweet()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()
 

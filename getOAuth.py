@@ -16,17 +16,14 @@ def get_creds(creds):
 	access key
 	access secret
 	"""
-	print """I will now attempt to open a web browser to create an OAuth key.
-	If you have previously obtained a consumer key and secret, you may close
+	print """\nI will now attempt to open a web browser to create an OAuth key.
+	If you have previously obtained a Consumer key and secret, you may close
 	the browser window, and enter them below. Otherwise, follow the
 	instructions on screen, and refer to
-	http://jmillerinc.com/2010/05/31/twitter-from-the-command-line
-	-in-python-using-oauth/
-	for hints. Be sure to choose "client", and "read/write access"
-
-	You may manually access the page at: https://dev.twitter.com/apps/new
+	https://github.com/urschrei/Plowman/blob/master/readme.md
+	for instructions. Be sure to choose "client", and "Read & Write access"
 	"""
-	inp = raw_input("Press Enter to continue, or q to quit...")
+	inp = raw_input("Press Return to continue, or q then Return to quit...")
 	if inp == "q":
 		print "Abandoning OAuth process."
 		raise tweepy.TweepError("OAuth Abandoned")
@@ -38,7 +35,7 @@ def get_creds(creds):
 	# open authorisation URL in browser
 	try:
 		webbrowser.open(autho.get_authorization_url())
-	except 	tweepy.TweepError:
+	except tweepy.TweepError:
 		raise
 	# ask user for verification pin
 	pin = raw_input('Verification PIN from twitter.com: ').strip()
@@ -46,9 +43,9 @@ def get_creds(creds):
 	token = autho.get_access_token(verifier=pin)
 
 	# give user the access token
-	print 'Access token:'
-	print '  Key: %s' % token.key
-	print '  Secret: %s' % token.secret
+	print "Access token: "
+	print "  Key: %s" % token.key
+	print "  Secret: %s" % token.secret
 	creds.append(token.key)
 	creds.append(token.secret)
 	return creds
@@ -65,5 +62,5 @@ def main():
 	print "Access secret: %s" % oac[3]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()
