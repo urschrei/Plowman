@@ -201,7 +201,7 @@ if __name__ == "__main__":
 		raise
 	except Exception, error:
 		# all other exceptions, so display the error
-		print error 
+		print error
 	else:
 		pass
 	finally:
