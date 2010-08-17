@@ -46,7 +46,7 @@ class BookFromTextFile:
 		self.lines = [l for l in get_lines if l.strip()]
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
-		
+
 		# create a SQLite connection, or create a new db and table
 		try:
 			self.connection = sqlite3.connect(self.db_name)
@@ -67,13 +67,13 @@ class BookFromTextFile:
 				(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 				header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
 				acckey STRING, accsecret STRING)')
-		
+
 			# try to select the correct row, based on the SHA1 digest
 			row = self.cursor.fetchone()
 			if row == None:
 				# no rows were returned, so insert default values with new digest
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
-				+ " New file found, inserting row. Digest:\n" + str(self.sha)) 
+				+ " New file found, inserting row. Digest:\n" + str(self.sha))
 				try:
 					# attempt to create OAuth credentials
 					try:
