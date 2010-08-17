@@ -119,7 +119,7 @@ class BookFromTextFile:
 		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
 		# match against any single member of self.headers
-		comped = re.compile("^(" + "|".join(self.headers) + ")")
+		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
 			if comped.search(self.lines[0]):
 				self.displayline = 1
