@@ -31,25 +31,25 @@ class BookFromTextFile:
 	"""
 	def __init__(self, fname = None, hid = None):
 		self.oavals = {}
-		self.name = fname
+		self.position = {}
 		self.headers = hid.split(",")
-		self.db_name = "tweet_books.sl3"
+		db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
 		# we're creating the digest from non-blank lines only, just because
 		try:
-			with open(self.name, "r") as t_file:
+			with open(fname, "r") as t_file:
 				self.lines = [line for line in t_file if line.strip()]
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
-			+ " Couldn't open text file %s for reading.") % (self.name)
+			+ " Couldn't open text file %s for reading.") % (fname)
 			sys.exit()
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
 
 		# create a SQLite connection, or create a new db and table
 		try:
-			self.connection = sqlite3.connect(self.db_name)
+			self.connection = sqlite3.connect(db_name)
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't read from, or create a db. That's a show-stopper.")
@@ -98,9 +98,9 @@ class BookFromTextFile:
 					# close the SQLite connection, and quit
 					sys.exit()
 		# set instance attrs from the db
-		self.db_lastline = row[1]
-		self.displayline = row[2]
-		self.prefix = row[3]
+		self.position["lastline"] = row[1]
+		self.position["displayline"] = row[2]
+		self.position["prefix"] = row[3]
 		self.oavals["conkey"] = row[5]
 		self.oavals["consecret"] = row[6]
 		self.oavals["acckey"] = row[7]
@@ -108,7 +108,7 @@ class BookFromTextFile:
 
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
-		self.lines = self.lines[self.db_lastline:self.db_lastline + 2]
+		self.lines = self.lines[row[1]:row[1] + 2]
 
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
@@ -122,12 +122,12 @@ class BookFromTextFile:
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
 			if comped.search(self.lines[0]):
-				self.displayline = 1
+				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
-				self.db_lastline += 2
-				self.prefix = self.lines[0]
+				self.position["lastline"] += 2
+				self.position["prefix"] = self.lines[0]
 				output_line = ('%s\nl. %s: %s') \
-				% (self.lines[0].strip(), str(self.displayline), \
+				% (self.lines[0].strip(), str(self.position["displayline"]), \
 				self.lines[1].strip())
 				self.lines.append(output_line)
 				return self.lines
@@ -135,14 +135,15 @@ class BookFromTextFile:
 		except IndexError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") + \
 			" %s Reached %s EOF on line %s"
-			% (str(sys.argv[0]), self.name, str(self.db_lastline)))
+			% (str(sys.argv[0]), self.sha, str(self.position["lastline"])))
 			sys.exit()
 		# proceed by using the latest untweeted line
-		self.displayline += 1
+		self.position["displayline"] += 1
 		# move counter to the next line
-		self.db_lastline += 1
+		self.position["lastline"] += 1
 		output_line = ('%sl. %s: %s') \
-		% (self.prefix, self.displayline, self.lines[0].strip())
+		% (self.position["prefix"], self.position["displayline"], \
+		self.lines[0].strip())
 		self.lines.append(output_line)
 		return self.lines
 		
@@ -163,8 +164,8 @@ class BookFromTextFile:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?,\
 				displayline = ?, header = ?, digest = ? WHERE digest = ?', \
-				(self.db_lastline, self.displayline, self.prefix, \
-				self.sha, self.sha))
+				(self.position["lastline"], self.position["displayline"], \
+				self.position["prefix"], self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
 				print "Wasn't able to update the db."
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
