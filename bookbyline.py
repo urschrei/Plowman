@@ -41,14 +41,13 @@ class BookFromTextFile:
 		# we're creating the digest from non-blank lines only, just because
 		try:
 			with open(fname, "r") as t_file:
-				self.lines = [line for line in t_file if line.strip()]
+				self.lines = tuple([line for line in t_file if line.strip()])
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file %s for reading.") % (fname)
 			sys.exit()
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
-
 		# create a SQLite connection, or create a new db and table
 		try:
 			self.connection = sqlite3.connect(db_name)
@@ -132,8 +131,7 @@ class BookFromTextFile:
 				output_line = ('%s\nl. %s: %s') \
 				% (self.lines[0].strip(), str(self.position["displayline"]), \
 				self.lines[1].strip())
-				self.lines.append(output_line)
-				return self.lines
+				return output_line
 		# means we've reached the end of the file
 		except IndexError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") + \
@@ -147,8 +145,7 @@ class BookFromTextFile:
 		output_line = ('%sl. %s: %s') \
 		% (self.position["prefix"], self.position["displayline"], \
 		self.lines[0].strip())
-		self.lines.append(output_line)
-		return self.lines
+		return output_line
 		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
@@ -157,7 +154,7 @@ class BookFromTextFile:
 		updated file position, line display number, and header values to the
 		db
 		"""
-		self.format_tweet()
+		payload = self.format_tweet()
 		auth = tweepy.OAuthHandler(self.oavals["conkey"], \
 		self.oavals["consecret"])
 		auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
@@ -176,7 +173,7 @@ class BookFromTextFile:
 				sys.exit()
 			try:
 				#api.update_status(str(self.lines[-1]))
-				print self.lines[-1]
+				print payload
 			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
