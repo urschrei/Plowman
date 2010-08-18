@@ -30,7 +30,9 @@ class BookFromTextFile:
 	are created.
 	"""
 	def __init__(self, fname = None, hid = None):
+		# will contain OAuth keys
 		self.oavals = {}
+		# will contain text file position, line and current prefix values
 		self.position = {}
 		self.headers = hid.split(",")
 		db_name = "tweet_books.sl3"
@@ -97,6 +99,10 @@ class BookFromTextFile:
 					+ " Couldn't insert new row into table. Exiting")
 					# close the SQLite connection, and quit
 					sys.exit()
+					
+		# now slice the lines list so we have the next two untweeted lines
+		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
+		self.lines = self.lines[row[1]:row[1] + 2]
 		# set instance attrs from the db
 		self.position["lastline"] = row[1]
 		self.position["displayline"] = row[2]
@@ -105,10 +111,6 @@ class BookFromTextFile:
 		self.oavals["consecret"] = row[6]
 		self.oavals["acckey"] = row[7]
 		self.oavals["accsecret"] = row[8]
-
-		# now slice the lines list so we have the next two untweeted lines
-		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
-		self.lines = self.lines[row[1]:row[1] + 2]
 
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
