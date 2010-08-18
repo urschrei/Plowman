@@ -30,6 +30,7 @@ class BookFromTextFile:
 	are created.
 	"""
 	def __init__(self, fname = None, hid = None):
+		self.oavals = {}
 		self.name = fname
 		self.headers = hid.split(",")
 		self.db_name = "tweet_books.sl3"
@@ -76,8 +77,7 @@ class BookFromTextFile:
 				try:
 					# attempt to create OAuth credentials
 					try:
-						oa_vals = {}
-						getOAuth.get_creds(oa_vals)
+						getOAuth.get_creds(self.oavals)
 					except tweepy.TweepError:
 						print "Couldn't complete OAuth setup. Fatal. Exiting."
 						logging.error(now.strftime("%Y-%m-%d %H:%M") \
@@ -86,8 +86,8 @@ class BookFromTextFile:
 					self.cursor.execute \
 					('INSERT INTO position VALUES \
 					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
-					oa_vals["conkey"], oa_vals["consecret"],\
-					oa_vals["acckey"], oa_vals["accsecret"]))
+					self.oavals["conkey"], self.oavals["consecret"],\
+					self.oavals["acckey"], self.oavals["accsecret"]))
 					# and select it
 					self.cursor.execute \
 					('SELECT * FROM position WHERE digest = ?',sl_digest)
@@ -101,10 +101,10 @@ class BookFromTextFile:
 		self.db_lastline = row[1]
 		self.displayline = row[2]
 		self.prefix = row[3]
-		self.consumer_key = row[5]
-		self.consumer_secret = row[6]
-		self.access_key = row[7]
-		self.access_secret = row[8]
+		self.oavals["conkey"] = row[5]
+		self.oavals["consecret"] = row[6]
+		self.oavals["acckey"] = row[7]
+		self.oavals["accsecret"] = row[8]
 
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
@@ -154,8 +154,9 @@ class BookFromTextFile:
 		db
 		"""
 		self.format_tweet()
-		auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_secret)
-		auth.set_access_token(self.access_key, self.access_secret)
+		auth = tweepy.OAuthHandler(self.oavals["conkey"], \
+		self.oavals["consecret"])
+		auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
 		api = tweepy.API(auth, secure=True)
 		# don't print the line unless the db is updateable
 		with self.connection:
