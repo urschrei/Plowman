@@ -70,7 +70,7 @@ class BookFromTextFile:
 			# try to select the correct row, based on the SHA1 digest
 			row = self.cursor.fetchone()
 			if row == None:
-				# no rows were returned, so insert default values with new digest
+				# no rows were returned, so insert default values + new digest
 				logging.error(now.strftime("%Y-%m-%d %H:%M") \
 				+ " New file found, inserting row. Digest:\n" + str(self.sha))
 				try:
