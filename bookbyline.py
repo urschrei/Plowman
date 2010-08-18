@@ -121,9 +121,10 @@ class BookFromTextFile:
 		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
 		# match against any single member of self.headers
+		# re.match should be more efficient
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
-			if comped.search(self.lines[0]):
+			if comped.match(self.lines[0]):
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
