@@ -99,7 +99,7 @@ class BookFromTextFile:
 					+ " Couldn't insert new row into table. Exiting")
 					# close the SQLite connection, and quit
 					sys.exit()
-					
+
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[row[1]:row[1] + 2]
