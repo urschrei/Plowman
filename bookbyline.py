@@ -33,7 +33,7 @@ class BookFromTextFile:
 		self.oavals = {}
 		# will contain text file position, line and current prefix values
 		self.position = {}
-		self.headers = ",".split(hid)
+		self.headers = hid
 		db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
@@ -185,22 +185,17 @@ def main():
 	"""
 	parser = argparse.ArgumentParser\
 	(description='Tweet lines of poetry from a text file')
-	parser.add_argument("-f", metavar = "filename", \
-	help="the full path to a text file")
-	parser.add_argument("-hd", metavar = "header string", \
-	help="a list of strings which will be treated as header lines", nargs="*")
-	parser.parse_args("-f".split())
-	parser.parse_args("-hd".split())
-	print blah
-	sys.exit()
-	# first argument (argv[0]) is the abs. path + filename -- not what we want
-	if len(sys.argv) != 3:
-		print "Incorrect number of arguments. Please call the script like this: \
-		bookbyline.py filename.txt header"
-		logging.error(now.strftime("%Y-%m-%d %H:%M") + " %s " +  \
-		+ " Incorrect number of arguments") % (str(sys.argv[0]))
-		sys.exit()
-	input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
+	parser.add_argument("-file", metavar = "filename", \
+	help="the full path to a text file", required=True)
+	parser.add_argument("-header", metavar = "header line", \
+	help="""A case-sensitive list of words (and punctuation) which will be 
+	treated as header lines. Enter as many as you wish, separated by a space.
+	Example: Purgatory: BOOK Passus
+	""", nargs="+", \
+	required=True)
+	fromcl = parser.parse_args()
+	print [l for l in fromcl.header]
+	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet()
 
 
