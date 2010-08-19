@@ -11,8 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, hashlib, sqlite3, tweepy, datetime, logging, re, getOAuth
-
+import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
 logging.basicConfig(filename=log_filename, level=logging.ERROR)
@@ -34,7 +33,7 @@ class BookFromTextFile:
 		self.oavals = {}
 		# will contain text file position, line and current prefix values
 		self.position = {}
-		self.headers = hid.split(",")
+		self.headers = ",".split(hid)
 		db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
