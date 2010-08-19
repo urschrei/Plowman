@@ -35,11 +35,16 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 # Usage #
 
-Standard usage: `python bookbyline.py [-l] -file file.txt -header header1 header2 header3 … headerN`  
+## Standard usage: ##
 
-Display usage help: `python bookbyline.py -h` 
+`python bookbyline.py [-l] -file file.txt -header header1 header2 header3 … headerN` 
 
-Arguments:
+## Display usage help: ##
+
+`python bookbyline.py -h` 
+
+## Arguments: ##
+
 >`-h`, `--help` show this help message and exit  
 >`-l` live switch: will tweet the line. If omitted, script prints to stdout  
 >`-file filename` the full path to a text file  
