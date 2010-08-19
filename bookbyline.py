@@ -187,14 +187,12 @@ def main():
 	(description='Tweet lines of poetry from a text file')
 	parser.add_argument("-file", metavar = "filename", \
 	help="the full path to a text file", required=True)
-	parser.add_argument("-header", metavar = "header line", \
-	help="""A case-sensitive list of words (and punctuation) which will be 
-	treated as header lines. Enter as many as you wish, separated by a space.
-	Example: Purgatory: BOOK Passus
-	""", nargs="+", \
+	parser.add_argument("-header", metavar = "header-line words", \
+	help="A case-sensitive list of words (and punctuation) which will be\
+	treated as header lines. Enter as many as you wish, separated by a \
+	space. Example - Purgatory: BOOK Passus", nargs="+", \
 	required=True)
 	fromcl = parser.parse_args()
-	print [l for l in fromcl.header]
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet()
 
