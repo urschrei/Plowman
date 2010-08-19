@@ -43,12 +43,12 @@ Arguments:
 >`-h`, `--help` show this help message and exit  
 >`-l` live switch: will tweet the line. If omitted, script prints to stdout  
 >`-file filename` the full path to a text file  
->>Example: `-file /usr/local/bin/plowman/poems/dc.txt`  
+>Example: `-file /usr/local/bin/plowman/poems/dc.txt`  
 >`-header header-line word [header-line word ...]`  
 >A case-sensitive list of words (and punctuation) which  
 >will be treated as header lines. Enter as many as you  
 >wish, separated by a space.  
->>Example: `-header Purgatory: BOOK Paradise: Passus Inferno:`  
+>Example: `-header Purgatory: BOOK Paradise: Passus Inferno:`  
 
 
 
