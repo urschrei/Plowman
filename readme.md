@@ -12,8 +12,8 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 1. If you haven't already done so, download and install [tweepy], and sign up for a [Twitter] account
 2. Copy `bookbyline.py`, `getOAuth.py`, and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been [chmod]ded `a+x`
-3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py /path/to/text.txt header_1,header_2,…header_n`, where "header_n" are strings which are to be considered "header" lines.
-	* example: `python mydir/bookbyline.py mydir/assets/poem.txt Inferno:,Purgatory:,Paradise:`
+3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py -file /path/to/text.txt -header header1 header2 … headern`, where "header*n*" is a word (including punctuation, such as colons etc.) which will cause any line which begins with it to be treated as a header line
+	* example: `python mydir/bookbyline.py -file mydir/assets/poem.txt -header Inferno: Purgatory: Paradise:`
 4. When you first run the script, you will be prompted to create OAuth credentials, and the script will attempt to open your default browser on the <https://dev.twitter.com/apps/new> page.
 5. Once you have signed into Twitter, you will have to complete a form with the following fields:
 	* `Application Name:` this is the name of the application which will appear in your tweets, feel free to personalise it
@@ -32,6 +32,12 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 9. On the next page, you will see a PIN. Copy this, switch back to the terminal, and paste it at the prompt, then press return. An `Access Key` and `Access Secret` will be displayed, the script will complete its initial setup, and tweet the first line of your chosen poem.
 10. You may now add the command detailed in step 3 to your crontab if you wish it to be fully automated, or call it from the command line whenever you like.
 11. You should see a new file, `tweet_books.sl3` in your home directory. This contains various settings and access keys for the account you just set up. If you remove it, or alter its contents, the script will reset, and you'll have to regenerate OAuth credentials. Don't move it unless you know what you're doing.
+
+# Usage #
+
+Standard usage: `python bookbyline.py -file file.txt -header header1 header2 header3 … headerN`  
+
+Display usage help: `python bookbyline.py -h`
 
 [tweepy]: http://github.com/joshthecoder/tweepy
 [Twitter]: https://twitter.com/signup

@@ -11,8 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, hashlib, sqlite3, tweepy, datetime, logging, re, getOAuth
-
+import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib, argparse
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
 logging.basicConfig(filename=log_filename, level=logging.ERROR)
@@ -34,21 +33,20 @@ class BookFromTextFile:
 		self.oavals = {}
 		# will contain text file position, line and current prefix values
 		self.position = {}
-		self.headers = hid.split(",")
+		self.headers = hid
 		db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
 		# we're creating the digest from non-blank lines only, just because
 		try:
 			with open(fname, "r") as t_file:
-				self.lines = [line for line in t_file if line.strip()]
+				self.lines = tuple([line for line in t_file if line.strip()])
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file %s for reading.") % (fname)
 			sys.exit()
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
-
 		# create a SQLite connection, or create a new db and table
 		try:
 			self.connection = sqlite3.connect(db_name)
@@ -121,9 +119,10 @@ class BookFromTextFile:
 		Prints a properly-formatted poetry line, including book/canto/line.
 		"""
 		# match against any single member of self.headers
+		# re.match should be more efficient
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
-			if comped.search(self.lines[0]):
+			if comped.match(self.lines[0]):
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
@@ -131,8 +130,7 @@ class BookFromTextFile:
 				output_line = ('%s\nl. %s: %s') \
 				% (self.lines[0].strip(), str(self.position["displayline"]), \
 				self.lines[1].strip())
-				self.lines.append(output_line)
-				return self.lines
+				return output_line
 		# means we've reached the end of the file
 		except IndexError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") + \
@@ -146,8 +144,7 @@ class BookFromTextFile:
 		output_line = ('%sl. %s: %s') \
 		% (self.position["prefix"], self.position["displayline"], \
 		self.lines[0].strip())
-		self.lines.append(output_line)
-		return self.lines
+		return output_line
 		
 	def emit_tweet(self):
 		""" First call the format_tweet() function, which correctly formats
@@ -156,7 +153,7 @@ class BookFromTextFile:
 		updated file position, line display number, and header values to the
 		db
 		"""
-		self.format_tweet()
+		payload = self.format_tweet()
 		auth = tweepy.OAuthHandler(self.oavals["conkey"], \
 		self.oavals["consecret"])
 		auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
@@ -174,8 +171,8 @@ class BookFromTextFile:
 				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
-				api.update_status(str(self.lines[-1]))
-				print self.lines[-1]
+				#api.update_status(str(self.lines[-1]))
+				print payload
 			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
@@ -186,14 +183,17 @@ class BookFromTextFile:
 def main():
 	""" main function
 	"""
-	# first argument (argv[0]) is the abs. path + filename -- not what we want
-	if len(sys.argv) != 3:
-		print "Incorrect number of arguments. Please call the script like this: \
-		bookbyline.py filename.txt header"
-		logging.error(now.strftime("%Y-%m-%d %H:%M") + " %s " +  \
-		+ " Incorrect number of arguments") % (str(sys.argv[0]))
-		sys.exit()
-	input_book = BookFromTextFile(sys.argv[1], sys.argv[2])
+	parser = argparse.ArgumentParser\
+	(description='Tweet lines of poetry from a text file')
+	parser.add_argument("-file", metavar = "filename", \
+	help="the full path to a text file", required=True)
+	parser.add_argument("-header", metavar = "header-line words", \
+	help="A case-sensitive list of words (and punctuation) which will be\
+	treated as header lines. Enter as many as you wish, separated by a \
+	space. Example - Purgatory: BOOK Passus", nargs="+", \
+	required=True)
+	fromcl = parser.parse_args()
+	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet()
 
 
