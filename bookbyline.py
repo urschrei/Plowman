@@ -11,7 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib
+import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib, argparse
 # logging stuff
 log_filename = '/var/log/twitter_books.log'
 logging.basicConfig(filename=log_filename, level=logging.ERROR)
@@ -183,6 +183,16 @@ class BookFromTextFile:
 def main():
 	""" main function
 	"""
+	parser = argparse.ArgumentParser\
+	(description='Tweet lines of poetry from a text file')
+	parser.add_argument("-f", metavar = "filename", \
+	help="the full path to a text file")
+	parser.add_argument("-hd", metavar = "header string", \
+	help="a list of strings which will be treated as header lines", nargs="*")
+	parser.parse_args("-f".split())
+	parser.parse_args("-hd".split())
+	print blah
+	sys.exit()
 	# first argument (argv[0]) is the abs. path + filename -- not what we want
 	if len(sys.argv) != 3:
 		print "Incorrect number of arguments. Please call the script like this: \
