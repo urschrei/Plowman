@@ -146,7 +146,7 @@ class BookFromTextFile:
 		self.lines[0].strip())
 		return output_line
 		
-	def emit_tweet(self):
+	def emit_tweet(self, live_tweet):
 		""" First call the format_tweet() function, which correctly formats
 		the current object's line[] members, depending
 		on what they are, then tweets the resulting string. It then writes the
@@ -171,8 +171,10 @@ class BookFromTextFile:
 				+ " %s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
-				#api.update_status(payload)
-				print payload
+				if live_tweet == True:
+					api.update_status(payload)
+				else:
+					print payload
 			except tweepy.TweepError, err:
 				logging.error(now.strftime("%Y-%m-%d %H:%M") + 
 				" %s Couldn't update status. Error was: %s") \
@@ -185,16 +187,19 @@ def main():
 	"""
 	parser = argparse.ArgumentParser\
 	(description='Tweet lines of poetry from a text file')
+	parser.add_argument("-l", help = "live switch: will tweet the line. \
+	Otherwise, it will be printed to stdout", action = "store_true", \
+	default = False, dest = "live")
 	parser.add_argument("-file", metavar = "filename", \
 	help="the full path to a text file", required=True)
-	parser.add_argument("-header", metavar = "header-line words", \
+	parser.add_argument("-header", metavar = "header-line word", \
 	help="A case-sensitive list of words (and punctuation) which will be\
 	treated as header lines. Enter as many as you wish, separated by a \
 	space. Example - Purgatory: BOOK Passus", nargs="+", \
 	required=True)
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
-	input_book.emit_tweet()
+	input_book.emit_tweet(fromcl.live)
 
 
 if __name__ == "__main__":

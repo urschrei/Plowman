@@ -12,8 +12,8 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 1. If you haven't already done so, download and install [tweepy], and sign up for a [Twitter] account
 2. Copy `bookbyline.py`, `getOAuth.py`, and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been [chmod]ded `a+x`
-3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py -file /path/to/text.txt -header header1 header2 … headern`, where "header*n*" is a word (including punctuation, such as colons etc.) which will cause any line which begins with it to be treated as a header line
-	* example: `python mydir/bookbyline.py -file mydir/assets/poem.txt -header Inferno: Purgatory: Paradise:`
+3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py -l -file /path/to/text.txt -header header1 header2 … headern`, where "header*n*" is a word (including punctuation, such as colons etc.) which will cause any line which begins with it to be treated as a header line
+	* example: `python mydir/bookbyline.py -l -file mydir/assets/poem.txt -header Inferno: Purgatory: Paradise:`
 4. When you first run the script, you will be prompted to create OAuth credentials, and the script will attempt to open your default browser on the <https://dev.twitter.com/apps/new> page.
 5. Once you have signed into Twitter, you will have to complete a form with the following fields:
 	* `Application Name:` this is the name of the application which will appear in your tweets, feel free to personalise it
@@ -35,9 +35,21 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 # Usage #
 
-Standard usage: `python bookbyline.py -file file.txt -header header1 header2 header3 … headerN`  
+Standard usage: `python bookbyline.py [-l] -file file.txt -header header1 header2 header3 … headerN`  
 
-Display usage help: `python bookbyline.py -h`
+Display usage help: `python bookbyline.py -h` 
+
+Arguments:
+>`-l` live switch: will tweet the line. If omitted, script prints to stdout  
+>`-h`, `--help`			show this help message and exit  
+>`-file` filename		the full path to a text file  
+>`-header` header-line word [header-line word ...]  
+>A case-sensitive list of words (and punctuation) which  
+>will be treated as header lines. Enter as many as you  
+>wish, separated by a space.  
+>Example - Purgatory: BOOK Passus  
+
+
 
 [tweepy]: http://github.com/joshthecoder/tweepy
 [Twitter]: https://twitter.com/signup
