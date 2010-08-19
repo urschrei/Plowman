@@ -40,14 +40,15 @@ Standard usage: `python bookbyline.py [-l] -file file.txt -header header1 header
 Display usage help: `python bookbyline.py -h` 
 
 Arguments:
+>`-h`, `--help` show this help message and exit  
 >`-l` live switch: will tweet the line. If omitted, script prints to stdout  
->`-h`, `--help`			show this help message and exit  
->`-file` filename		the full path to a text file  
->`-header` header-line word [header-line word ...]  
+>`-file filename` the full path to a text file  
+>>Example: `-file /usr/local/bin/plowman/poems/dc.txt`  
+>`-header header-line word [header-line word ...]`  
 >A case-sensitive list of words (and punctuation) which  
 >will be treated as header lines. Enter as many as you  
 >wish, separated by a space.  
->Example - Purgatory: BOOK Passus  
+>>Example: `-header Purgatory: BOOK Paradise: Passus Inferno:`  
 
 
 
