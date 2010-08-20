@@ -13,11 +13,11 @@ Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
 import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib, argparse
 # logging stuff
-log_filename = '/var/log/twitter_books.log'
-logging.basicConfig(filename = log_filename, level = logging.ERROR)
-now = datetime.datetime.now()
-
-
+logging.basicConfig(level=logging.DEBUG, \
+format='%(asctime)s %(levelname)s %(message)s', \
+datefmt='%a, %d %b %Y %H:%M:%S', \
+filename='/var/log/twitter_books.log', \
+filemode='a')
 
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
@@ -42,8 +42,7 @@ class BookFromTextFile:
 			with fname:
 				self.lines = tuple([line for line in fname if line.strip()])
 		except IOError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-			"Couldn't open text file %s for reading.") % (fname)
+			logging.critical("Couldn't read from file. exiting")
 			sys.exit()
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
@@ -51,8 +50,8 @@ class BookFromTextFile:
 		try:
 			self.connection = sqlite3.connect(db_name)
 		except IOError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-			"Couldn't read from, or create a db. That's a show-stopper.")
+			logging.critical\
+			("Couldn't read from, or create a db. That's a show-stopper.")
 			sys.exit()
 		with self.connection:
 			self.cursor = self.connection.cursor()
@@ -60,8 +59,7 @@ class BookFromTextFile:
 				self.cursor.execute \
 				('SELECT * FROM position WHERE digest = ?',sl_digest)
 			except sqlite3.OperationalError:
-				logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-				"Couldn't find table \'position\'. Creating…")
+				logging.info("Couldn't find table \'position\'. Creating…")
 				# set up a new blank table
 				self.cursor.execute('CREATE TABLE position \
 				(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
@@ -72,16 +70,16 @@ class BookFromTextFile:
 			row = self.cursor.fetchone()
 			if row == None:
 				# no rows were returned, so insert default values + new digest
-				logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-				"New file found, inserting row. Digest:\n" + str(self.sha))
+				logging.info\
+				("New file found, inserting row.%nDigest: %s" % str(self.sha))
 				try:
 					# attempt to create OAuth credentials
 					try:
 						getOAuth.get_creds(self.oavals)
 					except tweepy.TweepError:
 						print "Couldn't complete OAuth setup. Fatal. Exiting."
-						logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-						"Couldn't complete OAuth setup. Unable to continue.")
+						logging.critical\
+						("Couldn't complete OAuth setup. Unable to continue.")
 						sys.exit()
 					self.cursor.execute \
 					('INSERT INTO position VALUES \
@@ -93,7 +91,7 @@ class BookFromTextFile:
 					('SELECT * FROM position WHERE digest = ?',sl_digest)
 					row = self.cursor.fetchone()
 				except sqlite3.OperationalError:
-					logging.error(now.strftime("%Y-%m-%d %H:%M"), \
+					logging.critical(\
 					"Couldn't insert new row into table. Exiting")
 					# close the SQLite connection, and quit
 					sys.exit()
@@ -123,6 +121,7 @@ class BookFromTextFile:
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
 			if comped.match(self.lines[0]):
+				logging.info("New header line found: %s" % self.lines[0])
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
@@ -133,8 +132,7 @@ class BookFromTextFile:
 				return output_line
 		# means we've reached the end of the file
 		except IndexError:
-			logging.error(now.strftime("%Y-%m-%d %H:%M") + \
-			" %s Reached %s EOF on line %s"
+			logging.info("%s Reached %s EOF on line %s" \
 			% (str(sys.argv[0]), self.sha, str(self.position["lastline"])))
 			sys.exit()
 		# proceed by using the latest untweeted line
@@ -167,8 +165,7 @@ class BookFromTextFile:
 				self.position["prefix"], self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
 				print "Wasn't able to update the db."
-				logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-				"%s Couldn't update the db") % (str(sys.argv[0]))
+				logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
 				sys.exit()
 			try:
 				if live_tweet == True:
@@ -176,8 +173,7 @@ class BookFromTextFile:
 				else:
 					print payload
 			except tweepy.TweepError, err:
-				logging.error(now.strftime("%Y-%m-%d %H:%M"), \
-				"%s Couldn't update status. Error was: %s") \
+				logging.error("%s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
 				sys.exit()
 
