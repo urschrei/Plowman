@@ -17,13 +17,13 @@ def get_creds(creds):
 	access key
 	access secret
 	"""
-	print """\nI will now attempt to open a web browser to create an OAuth key.
-	If you have previously obtained a Consumer key and secret, you may close
-	the browser window, and enter them below. Otherwise, follow the
-	instructions on screen, and refer to
-	https://github.com/urschrei/Plowman/blob/master/readme.md
-	for instructions. Be sure to choose "client", and "Read & Write access"
-	"""
+	print """Now attempting to open a web browser to create an OAuth key.
+If you have previously obtained a Consumer key and secret, you may close
+the browser window, and enter them below. Otherwise, follow the
+instructions on screen, and refer to
+https://github.com/urschrei/Plowman/blob/master/readme.md
+for instructions. Be sure to choose "client", and "Read & Write access"
+"""
 	inp = raw_input("Press Return to continue, or q then Return to quit...")
 	if inp == "q":
 		print "Abandoning OAuth process."

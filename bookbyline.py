@@ -125,7 +125,9 @@ acckey STRING, accsecret STRING)')
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
 			if comped.match(self.lines[0]):
-				logging.info("New header line found: %s", self.lines[0])
+				logging.info(\
+				"New header line found on line %s. Content: %s", \
+				self.position["lastline"], self.lines[0])
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
