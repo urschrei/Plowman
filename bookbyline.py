@@ -11,7 +11,7 @@ argument can be given as a single word, or a comma-separated list
 
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 """
-import sys, sqlite3, tweepy, datetime, logging, re, getOAuth, hashlib, argparse
+import sys, sqlite3, tweepy, logging, re, getOAuth, hashlib, argparse
 # logging stuff
 logging.basicConfig(level=logging.DEBUG, \
 format='%(asctime)s %(levelname)s %(message)s', \
@@ -34,6 +34,7 @@ class BookFromTextFile:
 		# will contain text file position, line and current prefix values
 		self.position = {}
 		self.headers = hid
+		self.initial_run = False
 		db_name = "tweet_books.sl3"
 		
 		# try to open the specified text file to read, and get its SHA1 digest
@@ -62,16 +63,16 @@ class BookFromTextFile:
 				logging.info("Couldn't find table \'position\'. Creating…")
 				# set up a new blank table
 				self.cursor.execute('CREATE TABLE position \
-				(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-				header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
-				acckey STRING, accsecret STRING)')
+(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
+header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
+acckey STRING, accsecret STRING)')
 
 			# try to select the correct row, based on the SHA1 digest
 			row = self.cursor.fetchone()
 			if row == None:
 				# no rows were returned, so insert default values + new digest
 				logging.info\
-				("New file found, inserting row.%nDigest: %s" % str(self.sha))
+				("New file found, inserting row.\nDigest: %s", str(self.sha))
 				try:
 					# attempt to create OAuth credentials
 					try:
@@ -107,6 +108,9 @@ class BookFromTextFile:
 		self.oavals["consecret"] = row[6]
 		self.oavals["acckey"] = row[7]
 		self.oavals["accsecret"] = row[8]
+		# header line is blank or Null, so it hasn't been set yet
+		if self.position["prefix"] == None or len(self.position["prefix"]) == 0:
+			self.initial_run = True
 
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
@@ -121,7 +125,7 @@ class BookFromTextFile:
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
 			if comped.match(self.lines[0]):
-				logging.info("New header line found: %s" % self.lines[0])
+				logging.info("New header line found: %s", self.lines[0])
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
@@ -132,17 +136,29 @@ class BookFromTextFile:
 				return output_line
 		# means we've reached the end of the file
 		except IndexError:
-			logging.info("%s Reached %s EOF on line %s" \
-			% (str(sys.argv[0]), self.sha, str(self.position["lastline"])))
+			logging.info("%s Reached %s EOF on line %s", \
+			(str(sys.argv[0]), self.sha, str(self.position["lastline"])))
 			sys.exit()
 		# proceed by using the latest untweeted line
-		self.position["displayline"] += 1
-		# move counter to the next line
-		self.position["lastline"] += 1
-		output_line = ('%sl. %s: %s') \
-		% (self.position["prefix"], self.position["displayline"], \
-		self.lines[0].strip())
-		return output_line
+		if self.initial_run == False:
+			self.position["displayline"] += 1
+			# move counter to the next line
+			self.position["lastline"] += 1
+			output_line = ('%sl. %s: %s') \
+			% (self.position["prefix"], self.position["displayline"], \
+			self.lines[0].strip())
+			return output_line
+		# i.e. this is the initial run, but we haven't matched any headers
+		else:
+			print """You're running the script for the first time, but none
+of your header words matched. Your configuration details have
+been saved. Please check the text file and re-run the script. Remember that
+headers are case-sensitive. The first line is: \n%sHeader(s):\n%s""" \
+			% (self.lines[0], " ".join(self.headers))
+			logging.warning("Didn't match any header lines on initial run, not \
+printing anything.")
+			#print " ".split(self.headers)
+			sys.exit(1)
 		
 	def emit_tweet(self, live_tweet):
 		""" First call the format_tweet() function, which correctly formats
@@ -159,8 +175,8 @@ class BookFromTextFile:
 		# don't print the line unless the db is updateable
 		with self.connection:
 			try:
-				self.cursor.execute('UPDATE position SET position = ?,\
-				displayline = ?, header = ?, digest = ? WHERE digest = ?', \
+				self.cursor.execute('UPDATE position SET position = ?, \
+displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 				(self.position["lastline"], self.position["displayline"], \
 				self.position["prefix"], self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
@@ -185,15 +201,15 @@ def main():
 	parser = argparse.ArgumentParser\
 	(description='Tweet lines of poetry from a text file')
 	parser.add_argument("-l", help = "live switch: will tweet the line. \
-	Otherwise, it will be printed to stdout", action = "store_true", \
+Otherwise, it will be printed to stdout", action = "store_true", \
 	default = False, dest = "live")
 	parser.add_argument("-file", metavar = "filename", \
 	help = "the full path to a text file", required = True, \
 	type = argparse.FileType("r",0))
 	parser.add_argument("-header", metavar = "header-line word", \
 	help = "A case-sensitive list of words (and punctuation) which will be\
-	treated as header lines. Enter as many as you wish, separated by a \
-	space. Example - Purgatory: BOOK Passus", nargs = "+", \
+treated as header lines. Enter as many as you wish, separated by a \
+space. Example - Purgatory: BOOK Passus", nargs = "+", \
 	required = True)
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
