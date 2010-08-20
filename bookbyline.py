@@ -39,8 +39,8 @@ class BookFromTextFile:
 		# try to open the specified text file to read, and get its SHA1 digest
 		# we're creating the digest from non-blank lines only, just because
 		try:
-			with open(fname, "r") as t_file:
-				self.lines = tuple([line for line in t_file if line.strip()])
+			with fname:
+				self.lines = tuple([line for line in fname if line.strip()])
 		except IOError:
 			logging.error(now.strftime("%Y-%m-%d %H:%M") \
 			+ " Couldn't open text file %s for reading.") % (fname)
@@ -185,18 +185,20 @@ class BookFromTextFile:
 def main():
 	""" main function
 	"""
+	# define command-line arguments
 	parser = argparse.ArgumentParser\
 	(description='Tweet lines of poetry from a text file')
 	parser.add_argument("-l", help = "live switch: will tweet the line. \
 	Otherwise, it will be printed to stdout", action = "store_true", \
 	default = False, dest = "live")
 	parser.add_argument("-file", metavar = "filename", \
-	help="the full path to a text file", required=True)
+	help = "the full path to a text file", required = True, \
+	type = argparse.FileType("r",0))
 	parser.add_argument("-header", metavar = "header-line word", \
-	help="A case-sensitive list of words (and punctuation) which will be\
+	help = "A case-sensitive list of words (and punctuation) which will be\
 	treated as header lines. Enter as many as you wish, separated by a \
-	space. Example - Purgatory: BOOK Passus", nargs="+", \
-	required=True)
+	space. Example - Purgatory: BOOK Passus", nargs = "+", \
+	required = True)
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet(fromcl.live)
