@@ -3,22 +3,31 @@
 """ 
 This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
-whether it's a header line, or body text. The line position is stored in
+whether it's a header line, or body text.  The line position is stored in
 a sqlite3 database, which will be created in the current working directory.
 The module takes exactly two arguments: the file name (including path), and
-the text to match against in order to designate a header line. The second
+the text to match against in order to designate a header line.  The second
 argument can be given as a single word, or a comma-separated list
-
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
+
 """
-import sys, sqlite3, tweepy, logging, re, getOAuth, hashlib, argparse
+import sys
+import sqlite3
+import logging
+import re
+import hashlib
+import argparse
+
+import tweepy
+
+import getOAuth
+
 # logging stuff
 logging.basicConfig(level=logging.DEBUG, \
 format='%(asctime)s %(levelname)s %(message)s', \
 datefmt='%a, %d %b %Y %H:%M:%S', \
 filename='/var/log/twitter_books.log', \
 filemode='a')
-
 
 
 class MatchError(Exception):
@@ -29,16 +38,15 @@ class MatchError(Exception):
 	def __str__(self):
 		return repr(self.error)
 
-
-
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
 	2. a list object used to identify header lines
 	A sqlite3 connection object is created, and an attempt is made to
 	retrieve a row from a db matching the filename which was
-	passed. If no db is found, a new db, table, row and OAuth credentials
+	passed.  If no db is found, a new db, table, row and OAuth credentials
 	are created.
+	
 	"""
 	def __init__(self, fname = None, hid = None):
 		# will contain OAuth keys
@@ -129,8 +137,8 @@ acckey STRING, accsecret STRING)')
 		line, or a poetry line. If the current line is a header
 		(see self.headers),
 		we join the next line and reset the line number to 1.
-		
 		Prints a properly-formatted poetry line, including book/canto/line.
+		
 		"""
 		# match against any single member of self.headers
 		# re.match should be more efficient
@@ -174,13 +182,13 @@ printing anything.")
 			self.lines[0].strip())
 			return output_line
 
-
 	def emit_tweet(self, live_tweet):
 		""" First call the format_tweet() function, which correctly formats
 		the current object's line[] members, depending
-		on what they are, then tweets the resulting string. It then writes the
+		on what they are, then tweets the resulting string.  It then writes the
 		updated file position, line display number, and header values to the
-		db
+		db.
+		
 		"""
 		payload = self.format_tweet()
 		auth = tweepy.OAuthHandler(self.oavals["conkey"], \
@@ -208,7 +216,6 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 				raise
 
 
-
 def main():
 	""" main function
 	"""
@@ -229,7 +236,6 @@ space. Example - Purgatory: BOOK Passus", nargs = "+", \
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet(fromcl.live)
-
 
 
 if __name__ == "__main__":
