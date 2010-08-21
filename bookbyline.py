@@ -147,9 +147,9 @@ acckey STRING, accsecret STRING)')
 		# no header match, so check to see if we're on line 0
 		if self.position["lastline"] == 0:
 			print """You're running the script for the first time, but none
-of your specified header words matched. Your configuration details have
-been saved. Please check the text file and re-run the script. Remember that
-headers are case-sensitive. The first line is: \n%sHeader(s):\n%s""" \
+of your specified header words were matched. Your configuration details have
+been saved.\nPlease check the text file and re-run the script. Remember that
+headers are case-sensitive.\nThe first line is: \n%sHeader(s):\n%s""" \
 			% (self.lines[0], " ".join(self.headers))
 			logging.error("Didn't match header lines on first run, not \
 printing anything.")
