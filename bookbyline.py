@@ -19,6 +19,8 @@ datefmt='%a, %d %b %Y %H:%M:%S', \
 filename='/var/log/twitter_books.log', \
 filemode='a')
 
+
+
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
@@ -34,9 +36,8 @@ class BookFromTextFile:
 		# will contain text file position, line and current prefix values
 		self.position = {}
 		self.headers = hid
-		self.initial_run = False
 		db_name = "tweet_books.sl3"
-		
+
 		# try to open the specified text file to read, and get its SHA1 digest
 		# we're creating the digest from non-blank lines only, just because
 		try:
@@ -101,16 +102,17 @@ acckey STRING, accsecret STRING)')
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
 		self.lines = self.lines[row[1]:row[1] + 2]
 		# set instance attrs from the db
-		self.position["lastline"] = row[1]
-		self.position["displayline"] = row[2]
-		self.position["prefix"] = row[3]
-		self.oavals["conkey"] = row[5]
-		self.oavals["consecret"] = row[6]
-		self.oavals["acckey"] = row[7]
-		self.oavals["accsecret"] = row[8]
-		# header line is blank or Null, so it hasn't been set yet
-		if self.position["prefix"] == None or len(self.position["prefix"]) == 0:
-			self.initial_run = True
+		self.position = {
+			"lastline": row[1],
+			"displayline": row[2],
+			"prefix": row[3]
+			}
+		self.oavals = {
+			"conkey": row[5],
+			"consecret": row[6],
+			"acckey": row[7],
+			"accsecret": row[8]
+			}
 
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
@@ -124,6 +126,7 @@ acckey STRING, accsecret STRING)')
 		# re.match should be more efficient
 		comped = re.compile("^(%s)" % "|".join(self.headers))
 		try:
+			# If a header word is matched
 			if comped.match(self.lines[0]):
 				logging.info(\
 				"New header line found on line %s. Content: %s", \
@@ -141,8 +144,18 @@ acckey STRING, accsecret STRING)')
 			logging.info("%s Reached %s EOF on line %s", \
 			(str(sys.argv[0]), self.sha, str(self.position["lastline"])))
 			sys.exit()
-		# proceed by using the latest untweeted line
-		if self.initial_run == False:
+		# no header match, so check to see if we're on line 0
+		if self.position["lastline"] == 0:
+			print """You're running the script for the first time, but none
+of your header words matched. Your configuration details have
+been saved. Please check the text file and re-run the script. Remember that
+headers are case-sensitive. The first line is: \n%sHeader(s):\n%s""" \
+			% (self.lines[0], " ".join(self.headers))
+			logging.warning("Didn't match header lines on first run, not \
+printing anything.")
+			sys.exit(1)
+		# we didn't match a header, and aren't on line 0, so continue
+		else:
 			self.position["displayline"] += 1
 			# move counter to the next line
 			self.position["lastline"] += 1
@@ -150,18 +163,8 @@ acckey STRING, accsecret STRING)')
 			% (self.position["prefix"], self.position["displayline"], \
 			self.lines[0].strip())
 			return output_line
-		# i.e. this is the initial run, but we haven't matched any headers
-		else:
-			print """You're running the script for the first time, but none
-of your header words matched. Your configuration details have
-been saved. Please check the text file and re-run the script. Remember that
-headers are case-sensitive. The first line is: \n%sHeader(s):\n%s""" \
-			% (self.lines[0], " ".join(self.headers))
-			logging.warning("Didn't match any header lines on initial run, not \
-printing anything.")
-			#print " ".split(self.headers)
-			sys.exit(1)
-		
+
+
 	def emit_tweet(self, live_tweet):
 		""" First call the format_tweet() function, which correctly formats
 		the current object's line[] members, depending
