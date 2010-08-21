@@ -24,7 +24,7 @@ filemode='a')
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
-	2. a string used to identify header lines
+	2. a list object used to identify header lines
 	A sqlite3 connection object is created, and an attempt is made to
 	retrieve a row from a db matching the filename which was
 	passed. If no db is found, a new db, table, row and OAuth credentials
@@ -147,11 +147,11 @@ acckey STRING, accsecret STRING)')
 		# no header match, so check to see if we're on line 0
 		if self.position["lastline"] == 0:
 			print """You're running the script for the first time, but none
-of your header words matched. Your configuration details have
+of your specified header words matched. Your configuration details have
 been saved. Please check the text file and re-run the script. Remember that
 headers are case-sensitive. The first line is: \n%sHeader(s):\n%s""" \
 			% (self.lines[0], " ".join(self.headers))
-			logging.warning("Didn't match header lines on first run, not \
+			logging.error("Didn't match header lines on first run, not \
 printing anything.")
 			sys.exit(1)
 		# we didn't match a header, and aren't on line 0, so continue
