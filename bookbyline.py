@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 # coding=utf-8
 """ 
+Tweets lines of poetry from a text file.
+
 This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text.  The line position is stored in
@@ -23,10 +25,10 @@ import tweepy
 import getOAuth
 
 # logging stuff
-logging.basicConfig(level=logging.DEBUG, \
-format='%(asctime)s %(levelname)s %(message)s', \
-datefmt='%a, %d %b %Y %H:%M:%S', \
-filename='/var/log/twitter_books.log', \
+logging.basicConfig(level=logging.DEBUG,
+format='%(asctime)s %(levelname)s %(message)s',
+datefmt='%a, %d %b %Y %H:%M:%S',
+filename='/var/log/twitter_books.log',
 filemode='a')
 
 
@@ -39,14 +41,16 @@ class MatchError(Exception):
 		return repr(self.error)
 
 class BookFromTextFile:
-	""" Create a book object from a text file. Takes two arguments:
+	""" Create a book object from a text file.
+
+	Accepts two arguments:
 	1. a filename, from which text will be read
 	2. a list object used to identify header lines
 	A sqlite3 connection object is created, and an attempt is made to
 	retrieve a row from a db matching the filename which was
 	passed.  If no db is found, a new db, table, row and OAuth credentials
 	are created.
-	
+
 	"""
 	def __init__(self, fname = None, hid = None):
 		# will contain OAuth keys
@@ -103,15 +107,15 @@ acckey STRING, accsecret STRING)')
 						raise
 					self.cursor.execute \
 					('INSERT INTO position VALUES \
-					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
-					self.oavals["conkey"], self.oavals["consecret"],\
+					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
+					self.oavals["conkey"], self.oavals["consecret"],
 					self.oavals["acckey"], self.oavals["accsecret"]))
 					# and select it
 					self.cursor.execute \
 					('SELECT * FROM position WHERE digest = ?',sl_digest)
 					row = self.cursor.fetchone()
 				except sqlite3.OperationalError:
-					logging.critical(\
+					logging.critical(
 					"Couldn't insert new row into table. Exiting")
 					# close the SQLite connection, and quit
 					raise
@@ -134,11 +138,12 @@ acckey STRING, accsecret STRING)')
 
 	def format_tweet(self):
 		""" Properly format an input string based on whether it's a header
-		line, or a poetry line. If the current line is a header
-		(see self.headers),
+		line, or a poetry line.
+
+		If the current line is a header (see self.headers),
 		we join the next line and reset the line number to 1.
 		Prints a properly-formatted poetry line, including book/canto/line.
-		
+
 		"""
 		# match against any single member of self.headers
 		# re.match should be more efficient
@@ -146,20 +151,20 @@ acckey STRING, accsecret STRING)')
 		try:
 			# If a header word is matched
 			if comped.match(self.lines[0]):
-				logging.info(\
-				"New header line found on line %s. Content: %s", \
+				logging.info(
+				"New header line found on line %s. Content: %s",
 				self.position["lastline"], self.lines[0])
 				self.position["displayline"] = 1
 				# counter skips the next line, since we're tweeting it
 				self.position["lastline"] += 2
 				self.position["prefix"] = self.lines[0]
 				output_line = ('%s\nl. %s: %s') \
-				% (self.lines[0].strip(), str(self.position["displayline"]), \
+				% (self.lines[0].strip(), str(self.position["displayline"]),
 				self.lines[1].strip())
 				return output_line
 		# means we've reached the end of the file
 		except IndexError:
-			logging.info("%s Reached %s EOF on line %s", \
+			logging.info("%s Reached %s EOF on line %s",
 			(str(sys.argv[0]), self.sha, str(self.position["lastline"])))
 			raise
 		# no header match, so check to see if we're on line 0
@@ -183,15 +188,17 @@ printing anything.")
 			return output_line
 
 	def emit_tweet(self, live_tweet):
-		""" First call the format_tweet() function, which correctly formats
+		"""Outputs string as a tweet or as message to stdout.
+
+		First call the format_tweet() function, which correctly formats
 		the current object's line[] members, depending
 		on what they are, then tweets the resulting string.  It then writes the
 		updated file position, line display number, and header values to the
 		db.
-		
+
 		"""
 		payload = self.format_tweet()
-		auth = tweepy.OAuthHandler(self.oavals["conkey"], \
+		auth = tweepy.OAuthHandler(self.oavals["conkey"],
 		self.oavals["consecret"])
 		auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
 		api = tweepy.API(auth, secure=True)
@@ -199,8 +206,8 @@ printing anything.")
 		with self.connection:
 			try:
 				self.cursor.execute('UPDATE position SET position = ?, \
-displayline = ?, header = ?, digest = ? WHERE digest = ?', \
-				(self.position["lastline"], self.position["displayline"], \
+displayline = ?, header = ?, digest = ? WHERE digest = ?',
+				(self.position["lastline"], self.position["displayline"],
 				self.position["prefix"], self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
 				logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
@@ -217,21 +224,21 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 
 
 def main():
-	""" main function
+	""" main function.
 	"""
 	# define command-line arguments
 	parser = argparse.ArgumentParser\
 	(description='Tweet lines of poetry from a text file')
 	parser.add_argument("-l", help = "live switch: will tweet the line. \
-Otherwise, it will be printed to stdout", action = "store_true", \
+Otherwise, it will be printed to stdout", action = "store_true",
 	default = False, dest = "live")
-	parser.add_argument("-file", metavar = "filename", \
-	help = "the full path to a text file", required = True, \
+	parser.add_argument("-file", metavar = "filename",
+	help = "the full path to a text file", required = True,
 	type = argparse.FileType("r",0))
-	parser.add_argument("-header", metavar = "header-line word", \
+	parser.add_argument("-header", metavar = "header-line word",
 	help = "A case-sensitive list of words (and punctuation) which will be \
 treated as header lines. Enter as many as you wish, separated by a \
-space. Example - Purgatory: BOOK Passus", nargs = "+", \
+space. Example - Purgatory: BOOK Passus", nargs = "+",
 	required = True)
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
