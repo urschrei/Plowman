@@ -21,6 +21,16 @@ filemode='a')
 
 
 
+class MatchError(Exception):
+	"""Basic error which is raised if no header line is matched on initial run
+	"""
+	def __init__(self, detail):
+		self.error = detail
+	def __str__(self):
+		return repr(self.error)
+
+
+
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
 	1. a filename, from which text will be read
@@ -54,7 +64,7 @@ class BookFromTextFile:
 		except IOError:
 			logging.critical\
 			("Couldn't read from, or create a db. That's a show-stopper.")
-			sys.exit()
+			raise
 		with self.connection:
 			self.cursor = self.connection.cursor()
 			try:
@@ -82,7 +92,7 @@ acckey STRING, accsecret STRING)')
 						print "Couldn't complete OAuth setup. Fatal. Exiting."
 						logging.critical\
 						("Couldn't complete OAuth setup. Unable to continue.")
-						sys.exit()
+						raise
 					self.cursor.execute \
 					('INSERT INTO position VALUES \
 					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,\
@@ -96,7 +106,7 @@ acckey STRING, accsecret STRING)')
 					logging.critical(\
 					"Couldn't insert new row into table. Exiting")
 					# close the SQLite connection, and quit
-					sys.exit()
+					raise
 
 		# now slice the lines list so we have the next two untweeted lines
 		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
@@ -143,7 +153,7 @@ acckey STRING, accsecret STRING)')
 		except IndexError:
 			logging.info("%s Reached %s EOF on line %s", \
 			(str(sys.argv[0]), self.sha, str(self.position["lastline"])))
-			sys.exit()
+			raise
 		# no header match, so check to see if we're on line 0
 		if self.position["lastline"] == 0:
 			print """You're running the script for the first time, but none
@@ -153,7 +163,7 @@ headers are case-sensitive.\nThe first line is: \n%sHeader(s):\n%s""" \
 			% (self.lines[0], " ".join(self.headers))
 			logging.error("Didn't match header lines on first run, not \
 printing anything.")
-			sys.exit(1)
+			raise MatchError("No header match on initial run")
 		# we didn't match a header, and aren't on line 0, so continue
 		else:
 			self.position["displayline"] += 1
@@ -185,9 +195,8 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 				(self.position["lastline"], self.position["displayline"], \
 				self.position["prefix"], self.sha, self.sha))
 			except (sqlite3.OperationalError, IndexError):
-				print "Wasn't able to update the db."
 				logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
-				sys.exit()
+				raise
 			try:
 				if live_tweet == True:
 					api.update_status(payload)
@@ -196,7 +205,8 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?', \
 			except tweepy.TweepError, err:
 				logging.error("%s Couldn't update status. Error was: %s") \
 				% (str(sys.argv[0]), err)
-				sys.exit()
+				raise
+
 
 
 def main():
@@ -219,6 +229,7 @@ space. Example - Purgatory: BOOK Passus", nargs = "+", \
 	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet(fromcl.live)
+
 
 
 if __name__ == "__main__":
