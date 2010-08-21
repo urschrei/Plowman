@@ -19,7 +19,7 @@ datefmt='%a, %d %b %Y %H:%M:%S', \
 filename='/var/log/twitter_books.log', \
 filemode='a')
 
-# hack
+
 
 class BookFromTextFile:
 	""" Create a book object from a text file. Takes two arguments:
