@@ -212,7 +212,7 @@ Otherwise, it will be printed to stdout", action = "store_true", \
 	help = "the full path to a text file", required = True, \
 	type = argparse.FileType("r",0))
 	parser.add_argument("-header", metavar = "header-line word", \
-	help = "A case-sensitive list of words (and punctuation) which will be\
+	help = "A case-sensitive list of words (and punctuation) which will be \
 treated as header lines. Enter as many as you wish, separated by a \
 space. Example - Purgatory: BOOK Passus", nargs = "+", \
 	required = True)
