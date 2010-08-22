@@ -89,7 +89,6 @@ class BookFromTextFile:
             logging.critical("Couldn't read from file %s. exiting", fname)
             raise
         self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
-        
         sl_digest = (self.sha,)
         # create a SQLite connection, or create a new db and table
         try:
