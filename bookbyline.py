@@ -53,217 +53,218 @@ fromcl = parser.parse_args()
 
 
 class MatchError(Exception):
-	"""Basic error which is raised if no header line is matched on initial run.
-	"""
-	def __init__(self, detail):
-		self.error = detail
-	def __str__(self):
-		return repr(self.error)
+    """Basic error which is raised if no header line is matched on initial run.
+    """
+    def __init__(self, detail):
+        self.error = detail
+    def __str__(self):
+        return repr(self.error)
 
 class BookFromTextFile:
-	""" Create a book object from a text file.
+    """ Create a book object from a text file.
 
-	Accepts two arguments:
-	1. a filename, from which text will be read
-	2. a list object used to identify header lines
-	A sqlite3 connection object is created, and an attempt is made to
-	retrieve a row from a db matching the filename which was
-	passed.  If no db is found, a new db, table, row and OAuth credentials
-	are created.
+    Accepts two arguments:
+    1. a filename, from which text will be read
+    2. a list object used to identify header lines
+    A sqlite3 connection object is created, and an attempt is made to
+    retrieve a row from a db matching the filename which was
+    passed.  If no db is found, a new db, table, row and OAuth credentials
+    are created.
 
-	"""
-	def __init__(self, fname = None, hid = None):
-		# will contain OAuth keys
-		self.oavals = {}
-		# will contain text file position, line and current prefix values
-		self.position = {}
-		self.headers = hid
-		db_name = "tweet_books.sl3"
+    """
+    def __init__(self, fname = None, hid = None):
+        # will contain OAuth keys
+        self.oavals = {}
+        # will contain text file position, line and current prefix values
+        self.position = {}
+        self.headers = hid
+        db_name = "tweet_books.sl3"
 
-		# try to open the specified text file to read, and get its SHA1 digest
-		# we're creating the digest from non-blank lines only, just because
-		try:
-			with fname:
-				self.lines = tuple([line for line in fname if line.strip()])
-		except IOError:
-			logging.critical("Couldn't read from file %s. exiting", fname)
-			raise
-		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
-		sl_digest = (self.sha,)
-		# create a SQLite connection, or create a new db and table
-		try:
-			self.connection = sqlite3.connect(db_name)
-		except IOError:
-			logging.critical\
-			("Couldn't read from, or create a db. That's a show-stopper.")
-			raise
-		with self.connection:
-			self.cursor = self.connection.cursor()
-			try:
-				self.cursor.execute \
-				('SELECT * FROM position WHERE digest = ?',sl_digest)
-			except sqlite3.OperationalError:
-				logging.info("Couldn't find table \'position\'. Creating…")
-				# set up a new blank table
-				self.cursor.execute('CREATE TABLE position \
+        # try to open the specified text file to read, and get its SHA1 digest
+        # we're creating the digest from non-blank lines only, just because
+        try:
+            with fname:
+                self.lines = tuple([line for line in fname if line.strip()])
+        except IOError:
+            logging.critical("Couldn't read from file %s. exiting", fname)
+            raise
+        self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
+        
+        sl_digest = (self.sha,)
+        # create a SQLite connection, or create a new db and table
+        try:
+            self.connection = sqlite3.connect(db_name)
+        except IOError:
+            logging.critical\
+            ("Couldn't read from, or create a db. That's a show-stopper.")
+            raise
+        with self.connection:
+            self.cursor = self.connection.cursor()
+            try:
+                self.cursor.execute \
+                ('SELECT * FROM position WHERE digest = ?',sl_digest)
+            except sqlite3.OperationalError:
+                logging.info("Couldn't find table \'position\'. Creating…")
+                # set up a new blank table
+                self.cursor.execute('CREATE TABLE position \
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 header STRING, digest DOUBLE, conkey STRING, consecret STRING, \
 acckey STRING, accsecret STRING)')
 
-			# try to select the correct row, based on the SHA1 digest
-			row = self.cursor.fetchone()
-			if row == None:
-				# no rows were returned, so insert default values + new digest
-				logging.info\
-				("New file found, inserting row.\nDigest: %s", str(self.sha))
-				try:
-					# attempt to create OAuth credentials
-					try:
-						getOAuth.get_creds(self.oavals)
-					except tweepy.TweepError:
-						print "Couldn't complete OAuth setup. Fatal. Exiting."
-						logging.critical\
-						("Couldn't complete OAuth setup. Unable to continue.")
-						raise
-					self.cursor.execute \
-					('INSERT INTO position VALUES \
-					(null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
-					self.oavals["conkey"], self.oavals["consecret"],
-					self.oavals["acckey"], self.oavals["accsecret"]))
-					# and select it
-					self.cursor.execute \
-					('SELECT * FROM position WHERE digest = ?',sl_digest)
-					row = self.cursor.fetchone()
-				except sqlite3.OperationalError:
-					logging.critical(
-					"Couldn't insert new row into table. Exiting")
-					# close the SQLite connection, and quit
-					raise
+            # try to select the correct row, based on the SHA1 digest
+            row = self.cursor.fetchone()
+            if row == None:
+                # no rows were returned, so insert default values + new digest
+                logging.info\
+                ("New file found, inserting row.\nDigest: %s", str(self.sha))
+                try:
+                    # attempt to create OAuth credentials
+                    try:
+                        getOAuth.get_creds(self.oavals)
+                    except tweepy.TweepError:
+                        print "Couldn't complete OAuth setup. Fatal. Exiting."
+                        logging.critical\
+                        ("Couldn't complete OAuth setup. Unable to continue.")
+                        raise
+                    self.cursor.execute \
+                    ('INSERT INTO position VALUES \
+                    (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
+                    self.oavals["conkey"], self.oavals["consecret"],
+                    self.oavals["acckey"], self.oavals["accsecret"]))
+                    # and select it
+                    self.cursor.execute \
+                    ('SELECT * FROM position WHERE digest = ?',sl_digest)
+                    row = self.cursor.fetchone()
+                except sqlite3.OperationalError:
+                    logging.critical(
+                    "Couldn't insert new row into table. Exiting")
+                    # close the SQLite connection, and quit
+                    raise
 
-		# now slice the lines list so we have the next two untweeted lines
-		# right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
-		self.lines = self.lines[row[1]:row[1] + 2]
-		# set instance attrs from the db
-		self.position = {
-			"lastline": row[1],
-			"displayline": row[2],
-			"prefix": row[3]
-			}
-		self.oavals = {
-			"conkey": row[5],
-			"consecret": row[6],
-			"acckey": row[7],
-			"accsecret": row[8]
-			}
+        # now slice the lines list so we have the next two untweeted lines
+        # right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
+        self.lines = self.lines[row[1]:row[1] + 2]
+        # set instance attrs from the db
+        self.position = {
+            "lastline": row[1],
+            "displayline": row[2],
+            "prefix": row[3]
+            }
+        self.oavals = {
+            "conkey": row[5],
+            "consecret": row[6],
+            "acckey": row[7],
+            "accsecret": row[8]
+            }
 
-	def format_tweet(self):
-		""" Properly format an input string based on whether it's a header
-		line, or a poetry line.
+    def format_tweet(self):
+        """ Properly format an input string based on whether it's a header
+        line, or a poetry line.
 
-		If the current line is a header (see self.headers),
-		we join the next line and reset the line number to 1.
-		Prints a properly-formatted poetry line, including book/canto/line.
+        If the current line is a header (see self.headers),
+        we join the next line and reset the line number to 1.
+        Prints a properly-formatted poetry line, including book/canto/line.
 
-		"""
-		# match against any single member of self.headers
-		# re.match should be more efficient
-		comped = re.compile("^(%s)" % "|".join(self.headers))
-		try:
-			# If a header word is matched
-			if comped.match(self.lines[0]):
-				logging.info(
-				"New header line found on line %s. Content: %s",
-				self.position["lastline"], self.lines[0])
-				self.position["displayline"] = 1
-				# counter skips the next line, since we're tweeting it
-				self.position["lastline"] += 2
-				self.position["prefix"] = self.lines[0]
-				output_line = ('%s\nl. %s: %s') \
-				% (self.lines[0].strip(), str(self.position["displayline"]),
-				self.lines[1].strip())
-				return output_line
-		# means we've reached the end of the file
-		except IndexError:
-			logging.info("%s Reached %s EOF on line %s",
-			(str(sys.argv[0]), self.sha, str(self.position["lastline"])))
-			raise
-		# no header match, so check to see if we're on line 0
-		if self.position["lastline"] == 0:
-			print """You're running the script for the first time, but none
+        """
+        # match against any single member of self.headers
+        # re.match should be more efficient
+        comped = re.compile("^(%s)" % "|".join(self.headers))
+        try:
+            # If a header word is matched
+            if comped.match(self.lines[0]):
+                logging.info(
+                "New header line found on line %s. Content: %s",
+                self.position["lastline"], self.lines[0])
+                self.position["displayline"] = 1
+                # counter skips the next line, since we're tweeting it
+                self.position["lastline"] += 2
+                self.position["prefix"] = self.lines[0]
+                output_line = ('%s\nl. %s: %s') \
+                % (self.lines[0].strip(), str(self.position["displayline"]),
+                self.lines[1].strip())
+                return output_line
+        # means we've reached the end of the file
+        except IndexError:
+            logging.info("%s Reached %s EOF on line %s",
+            (str(sys.argv[0]), self.sha, str(self.position["lastline"])))
+            raise
+        # no header match, so check to see if we're on line 0
+        if self.position["lastline"] == 0:
+            print """You're running the script for the first time, but none
 of your specified header words were matched. Your configuration details have
 been saved.\nPlease check the text file and re-run the script. Remember that
 headers are case-sensitive.\nThe first line is: \n%sHeader(s):\n%s""" \
-			% (self.lines[0], " ".join(self.headers))
-			logging.error("Didn't match header lines on first run, not \
+            % (self.lines[0], " ".join(self.headers))
+            logging.error("Didn't match header lines on first run, not \
 printing anything.")
-			raise MatchError("No header match on initial run")
-		# we didn't match a header, and aren't on line 0, so continue
-		else:
-			self.position["displayline"] += 1
-			# move counter to the next line
-			self.position["lastline"] += 1
-			output_line = ('%sl. %s: %s') \
-			% (self.position["prefix"], self.position["displayline"], \
-			self.lines[0].strip())
-			return output_line
+            raise MatchError("No header match on initial run")
+        # we didn't match a header, and aren't on line 0, so continue
+        else:
+            self.position["displayline"] += 1
+            # move counter to the next line
+            self.position["lastline"] += 1
+            output_line = ('%sl. %s: %s') \
+            % (self.position["prefix"], self.position["displayline"], \
+            self.lines[0].strip())
+            return output_line
 
-	def emit_tweet(self, live_tweet):
-		"""Outputs string as a tweet or as message to stdout.
+    def emit_tweet(self, live_tweet):
+        """Outputs string as a tweet or as message to stdout.
 
-		First call the format_tweet() function, which correctly formats
-		the current object's line[] members, depending
-		on what they are, then tweets the resulting string.  It then writes the
-		updated file position, line display number, and header values to the
-		db.
+        First call the format_tweet() function, which correctly formats
+        the current object's line[] members, depending
+        on what they are, then tweets the resulting string.  It then writes the
+        updated file position, line display number, and header values to the
+        db.
 
-		"""
-		payload = self.format_tweet()
-		auth = tweepy.OAuthHandler(self.oavals["conkey"],
-		self.oavals["consecret"])
-		auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
-		api = tweepy.API(auth, secure=True)
-		# don't print the line unless the db is updateable
-		with self.connection:
-			try:
-				self.cursor.execute('UPDATE position SET position = ?, \
+        """
+        payload = self.format_tweet()
+        auth = tweepy.OAuthHandler(self.oavals["conkey"],
+        self.oavals["consecret"])
+        auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
+        api = tweepy.API(auth, secure=True)
+        # don't print the line unless the db is updateable
+        with self.connection:
+            try:
+                self.cursor.execute('UPDATE position SET position = ?, \
 displayline = ?, header = ?, digest = ? WHERE digest = ?',
-				(self.position["lastline"], self.position["displayline"],
-				self.position["prefix"], self.sha, self.sha))
-			except (sqlite3.OperationalError, IndexError):
-				logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
-				raise
-			try:
-				if live_tweet == True:
-					api.update_status(payload)
-				else:
-					print payload
-			except tweepy.TweepError, err:
-				logging.error("%s Couldn't update status. Error was: %s") \
-				% (str(sys.argv[0]), err)
-				raise
+                (self.position["lastline"], self.position["displayline"],
+                self.position["prefix"], self.sha, self.sha))
+            except (sqlite3.OperationalError, IndexError):
+                logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
+                raise
+            try:
+                if live_tweet == True:
+                    api.update_status(payload)
+                else:
+                    print payload
+            except tweepy.TweepError, err:
+                logging.error("%s Couldn't update status. Error was: %s") \
+                % (str(sys.argv[0]), err)
+                raise
 
 
 def main():
-	""" main function.
-	"""
-	input_book = BookFromTextFile(fromcl.file, fromcl.header)
-	input_book.emit_tweet(fromcl.live)
+    """ main function.
+    """
+    input_book = BookFromTextFile(fromcl.file, fromcl.header)
+    input_book.emit_tweet(fromcl.live)
 
 
 if __name__ == "__main__":
-	try:
-		main()
-	except (KeyboardInterrupt, SystemExit):
-		# actually raise these so it exits cleanly
-		raise
-	except Exception, error:
-		# all other exceptions, so display the error
-		if fromcl.errs == True:
-			print "Stack trace:\n", traceback.print_exc(file = sys.stdout)
-		else:
-			pass
-	else:
-		pass
-	finally:
-		# exit cleanly once we've done everything else
-		sys.exit(0)
+    try:
+        main()
+    except (KeyboardInterrupt, SystemExit):
+        # actually raise these so it exits cleanly
+        raise
+    except Exception, error:
+        # all other exceptions, so display the error
+        if fromcl.errs == True:
+            print "Stack trace:\n", traceback.print_exc(file = sys.stdout)
+        else:
+            pass
+    else:
+        pass
+    finally:
+        # exit cleanly once we've done everything else
+        sys.exit(0)
