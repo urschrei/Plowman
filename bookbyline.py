@@ -168,7 +168,6 @@ acckey STRING, accsecret STRING)')
         # match against any single member of self.headers
         # re.match should be more efficient
         comped = re.compile("(%s)" % "|".join(self.headers))
-        print comped
         try:
             # If a header word is matched at the beginning of a line
             if comped.match(self.lines[0]):
