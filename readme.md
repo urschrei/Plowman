@@ -50,10 +50,11 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 >`-file filename` the full path to a text file. **required**  
 >Example: `-file /usr/local/bin/plowman/poems/dc.txt`  
 >`-header header-line word [header-line word ...]` **required**  
->A case-sensitive list of words (and punctuation) which  
+>a case-sensitive list of words (and punctuation) which  
 >will be treated as header lines. Enter as many as you  
 >wish, separated by a space.  
 >Example: `-header Purgatory: BOOK Paradise: Passus Inferno:`  
+>`-v` verbose errors: will print the stack trace to stdout if an error occurs  
 
 
 

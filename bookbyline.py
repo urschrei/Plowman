@@ -19,6 +19,7 @@ import logging
 import re
 import hashlib
 import argparse
+import traceback
 
 import tweepy
 
@@ -32,8 +33,27 @@ filename='/var/log/twitter_books.log',
 filemode='a')
 
 
+# define command-line arguments
+parser = argparse.ArgumentParser\
+(description='Tweet lines of poetry from a text file')
+parser.add_argument("-l", help = "live switch: will tweet the line. \
+Otherwise, it will be printed to stdout", action = "store_true",
+default = False, dest = "live")
+parser.add_argument("-file", metavar = "filename",
+help = "the full path to a text file", required = True,
+type = argparse.FileType("r",0))
+parser.add_argument("-header", metavar = "header-line word to match",
+help = "a case-sensitive list of words (and punctuation) which will be \
+treated as header lines. Enter as many as you wish, separated by a \
+space. Example - Purgatory: BOOK Passus", nargs = "+",
+required = True)
+parser.add_argument("-v", help = "Print stack trace to stdout",
+action = "store_true", default = False, dest = "errs")
+fromcl = parser.parse_args()
+
+
 class MatchError(Exception):
-	"""Basic error which is raised if no header line is matched on initial run
+	"""Basic error which is raised if no header line is matched on initial run.
 	"""
 	def __init__(self, detail):
 		self.error = detail
@@ -226,21 +246,6 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?',
 def main():
 	""" main function.
 	"""
-	# define command-line arguments
-	parser = argparse.ArgumentParser\
-	(description='Tweet lines of poetry from a text file')
-	parser.add_argument("-l", help = "live switch: will tweet the line. \
-Otherwise, it will be printed to stdout", action = "store_true",
-	default = False, dest = "live")
-	parser.add_argument("-file", metavar = "filename",
-	help = "the full path to a text file", required = True,
-	type = argparse.FileType("r",0))
-	parser.add_argument("-header", metavar = "header-line word",
-	help = "A case-sensitive list of words (and punctuation) which will be \
-treated as header lines. Enter as many as you wish, separated by a \
-space. Example - Purgatory: BOOK Passus", nargs = "+",
-	required = True)
-	fromcl = parser.parse_args()
 	input_book = BookFromTextFile(fromcl.file, fromcl.header)
 	input_book.emit_tweet(fromcl.live)
 
@@ -253,7 +258,10 @@ if __name__ == "__main__":
 		raise
 	except Exception, error:
 		# all other exceptions, so display the error
-		print error
+		if fromcl.errs == True:
+			print "Stack trace:\n", traceback.print_exc(file = sys.stdout)
+		else:
+			pass
 	else:
 		pass
 	finally:
