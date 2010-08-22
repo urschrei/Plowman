@@ -86,8 +86,8 @@ class BookFromTextFile:
 			with fname:
 				self.lines = tuple([line for line in fname if line.strip()])
 		except IOError:
-			logging.critical("Couldn't read from file. exiting")
-			sys.exit()
+			logging.critical("Couldn't read from file %s. exiting", fname)
+			raise
 		self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
 		sl_digest = (self.sha,)
 		# create a SQLite connection, or create a new db and table
