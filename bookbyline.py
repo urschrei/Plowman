@@ -29,7 +29,6 @@ Please install using easy_install, or obtain it from GitHub at \n\
 http://github.com/joshthecoder/tweepy"
     sys.exit()
 
-import getOAuth
 
 # logging stuff
 logging.basicConfig(level=logging.DEBUG,
@@ -124,13 +123,18 @@ acckey STRING, accsecret STRING)')
                 ("New file found, inserting row.\nDigest: %s", str(self.sha))
                 try:
                     # attempt to create OAuth credentials
-                    try:
-                        getOAuth.get_creds(self.oavals)
-                    except tweepy.TweepError:
-                        print "Couldn't complete OAuth setup. Fatal. Exiting."
-                        logging.critical\
-                        ("Couldn't complete OAuth setup. Unable to continue.")
-                        raise
+                    import getOAuth
+                except ImportError:
+                    logging.critical("Couldn't import getOAuth module")
+                    raise
+                try:
+                    getOAuth.get_creds(self.oavals)
+                except tweepy.TweepError:
+                    print "Couldn't complete OAuth setup. Fatal. Exiting."
+                    logging.critical\
+                    ("Couldn't complete OAuth setup. Unable to continue.")
+                    raise
+                try:
                     self.cursor.execute \
                     ('INSERT INTO position VALUES \
                     (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
