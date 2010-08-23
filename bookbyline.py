@@ -118,37 +118,38 @@ acckey STRING, accsecret STRING)')
             # try to select the correct row, based on the SHA1 digest
             row = self.cursor.fetchone()
             if row == None:
-                # no rows were returned, so insert default values + new digest
-                logging.info\
-                ("New file found, inserting row.\nDigest: %s", str(self.sha))
-                try:
-                    # attempt to create OAuth credentials
-                    import getOAuth
-                except ImportError:
-                    logging.critical("Couldn't import getOAuth module")
-                    raise
-                try:
-                    getOAuth.get_creds(self.oavals)
-                except tweepy.TweepError:
-                    print "Couldn't complete OAuth setup. Fatal. Exiting."
-                    logging.critical\
-                    ("Couldn't complete OAuth setup. Unable to continue.")
-                    raise
-                try:
-                    self.cursor.execute \
-                    ('INSERT INTO position VALUES \
-                    (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
-                    self.oavals["conkey"], self.oavals["consecret"],
-                    self.oavals["acckey"], self.oavals["accsecret"]))
-                    # and select it
-                    self.cursor.execute \
-                    ('SELECT * FROM position WHERE digest = ?',sl_digest)
-                    row = self.cursor.fetchone()
-                except sqlite3.OperationalError:
-                    logging.critical(
-                    "Couldn't insert new row into table. Exiting")
-                    # close the SQLite connection, and quit
-                    raise
+                with self.connection:
+                    # no rows were returned, insert default values + new digest
+                    logging.info\
+                    ("New file found, inserting row.\nSHA1: %s", str(self.sha))
+                    try:
+                        # attempt to create OAuth credentials
+                        import getOAuth
+                    except ImportError:
+                        logging.critical("Couldn't import getOAuth module")
+                        raise
+                    try:
+                        getOAuth.get_creds(self.oavals)
+                    except tweepy.TweepError:
+                        print "Couldn't complete OAuth setup. Fatal. Exiting."
+                        logging.critical\
+                        ("Couldn't complete OAuth setup. Unable to continue.")
+                        raise
+                    try:
+                        self.cursor.execute \
+                        ('INSERT INTO position VALUES \
+                        (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
+                        self.oavals["conkey"], self.oavals["consecret"],
+                        self.oavals["acckey"], self.oavals["accsecret"]))
+                        # and select it
+                        self.cursor.execute \
+                        ('SELECT * FROM position WHERE digest = ?',sl_digest)
+                        row = self.cursor.fetchone()
+                    except sqlite3.OperationalError:
+                        logging.critical(
+                        "Couldn't insert new row into table. Exiting")
+                        # close the SQLite connection, and quit
+                        raise
 
         # now slice the lines list so we have the next two untweeted lines
         # right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
