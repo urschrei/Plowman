@@ -165,7 +165,7 @@ on position (digest ASC)')
             "accsecret": row[8]
             }
 
-    # messing about with generator objects
+
     def iter_tweet(self):
         """Return a generator object containing each non-blank text file line
         """
@@ -196,7 +196,7 @@ on position (digest ASC)')
         try:
             initial_line = getlines.send(self.position["lastline"])
         except IndexError:
-            logging.info("Reached %s EOF on line %s", self.sha, 
+            logging.info("Reached %s EOF on line %s", self.sha,
             self.position["lastline"] - 1)
             raise
         # If a header word is matched at the beginning of a line
