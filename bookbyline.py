@@ -152,9 +152,6 @@ on position (digest ASC)')
                         # close the SQLite connection, and quit
                         raise
 
-        # now slice the lines list so we have the next two untweeted lines
-        # right slice index value is ONE LESS THAN THE SPECIFIED NUMBER)
-        self.lines = self.lines[row[1]:row[1] + 2]
         # set instance attrs from the db
         self.position = {
             "lastline": row[1],
@@ -168,6 +165,19 @@ on position (digest ASC)')
             "accsecret": row[8]
             }
 
+    # messing about with generator objects
+    def iter_tweet(self):
+        """Return a generator object containing each non-blank text file line
+        """
+        i = 0
+        while i < len(self.lines):
+            val = (yield self.lines[i])
+            if val is not None:
+                i = val
+            else:
+                i += 1
+
+
     def format_tweet(self):
         """ Properly format an input string based on whether it's a header
         line, or a poetry line.
@@ -179,20 +189,24 @@ on position (digest ASC)')
         """
         # match against any single member of self.headers
         # re.match should be more efficient
+        getlines = self.iter_tweet()
+        # we're not doing anything with this, it's just an init
+        next(getlines)
         comped = re.compile("(%s)" % "|".join(self.headers))
+        initial_line = getlines.send(self.position["lastline"])
         try:
             # If a header word is matched at the beginning of a line
-            if comped.match(self.lines[0]):
+            if comped.match(initial_line):
                 logging.info(
                 "New header line found on line %s. Content: %s",
                 self.position["lastline"], self.lines[0])
                 self.position["displayline"] = 1
                 # counter skips the next line, since we're tweeting it
                 self.position["lastline"] += 2
-                self.position["prefix"] = self.lines[0]
+                self.position["prefix"] = initial_line
                 output_line = ('%s\nl. %s: %s') \
-                % (self.lines[0].strip(), str(self.position["displayline"]),
-                self.lines[1].strip())
+                % (self.position["prefix"], str(self.position["displayline"]),
+                next(getlines).strip())
                 return output_line
         # means we've reached the end of the file
         except IndexError:
@@ -216,7 +230,7 @@ printing anything.")
             self.position["lastline"] += 1
             output_line = ('%sl. %s: %s') \
             % (self.position["prefix"], self.position["displayline"], \
-            self.lines[0].strip())
+            initial_line.strip())
             return output_line
 
     def emit_tweet(self, live_tweet):
