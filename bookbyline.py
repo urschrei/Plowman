@@ -170,7 +170,7 @@ on position (digest ASC)')
         """Return a generator object containing each non-blank text file line
         """
         i = 0
-        while i < len(self.lines):
+        while self.lines:
             val = (yield self.lines[i])
             if val is not None:
                 i = val
@@ -193,26 +193,25 @@ on position (digest ASC)')
         # we're not doing anything with this, it's just an init
         next(getlines)
         comped = re.compile("(%s)" % "|".join(self.headers))
-        initial_line = getlines.send(self.position["lastline"])
         try:
-            # If a header word is matched at the beginning of a line
-            if comped.match(initial_line):
-                logging.info(
-                "New header line found on line %s. Content: %s",
-                self.position["lastline"], self.lines[0])
-                self.position["displayline"] = 1
-                # counter skips the next line, since we're tweeting it
-                self.position["lastline"] += 2
-                self.position["prefix"] = initial_line
-                output_line = ('%s\nl. %s: %s') \
-                % (self.position["prefix"], str(self.position["displayline"]),
-                next(getlines).strip())
-                return output_line
-        # means we've reached the end of the file
+            initial_line = getlines.send(self.position["lastline"])
         except IndexError:
-            logging.info("%s Reached %s EOF on line %s",
-            (str(sys.argv[0]), self.sha, str(self.position["lastline"])))
+            logging.info("Reached %s EOF on line %s", self.sha, 
+            self.position["lastline"] - 1)
             raise
+        # If a header word is matched at the beginning of a line
+        if comped.match(initial_line):
+            logging.info(
+            "New header line found on line %s. Content: %s",
+            self.position["lastline"], self.lines[0])
+            self.position["displayline"] = 1
+            # counter skips the next line, since we're tweeting it
+            self.position["lastline"] += 2
+            self.position["prefix"] = initial_line
+            output_line = ('%s\nl. %s: %s') \
+            % (self.position["prefix"], str(self.position["displayline"]),
+            next(getlines).strip())
+            return output_line
         # no header match, so check to see if we're on line 0
         if self.position["lastline"] == 0:
             print """You're running the script for the first time, but none
