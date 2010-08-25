@@ -114,7 +114,8 @@ class BookFromTextFile:
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 header TEXT, digest DOUBLE, conkey TEXT, consecret TEXT, \
 acckey TEXT, accsecret TEXT)')
-
+                self.cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
+on position (digest ASC)')
             # try to select the correct row, based on the SHA1 digest
             row = self.cursor.fetchone()
             if row == None:
