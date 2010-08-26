@@ -165,7 +165,22 @@ on position (digest ASC)')
             "accsecret": row[8]
             }
 
+    # I have no idea how this works. But whoa. No need for a next(generator)
+    def consumer(func):
+        """
+        Decorator that allows us to skip initiating a generator with a next()
+        """ 
+        def _start(*args, **kwargs):
+            """
+            Initialiser, unpacks incoming function args
+            """
+            con_func = func(*args, **kwargs)
+            con_func.next()
+            return con_func 
+        return _start
 
+
+    @consumer
     def iter_tweet(self):
         """Return a generator object containing each non-blank text file line
         """
@@ -191,7 +206,7 @@ on position (digest ASC)')
         # re.match should be more efficient
         getlines = self.iter_tweet()
         # we're not doing anything with this, it's just an init
-        next(getlines)
+        #next(getlines)
         comped = re.compile("(%s)" % "|".join(self.headers))
         try:
             initial_line = getlines.send(self.position["lastline"])
