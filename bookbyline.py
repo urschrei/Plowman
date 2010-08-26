@@ -169,20 +169,22 @@ on position (digest ASC)')
     def consumer(func):
         """
         Decorator that allows us to skip initiating a generator with a next()
-        """ 
+        """
         def _start(*args, **kwargs):
             """
             Initialiser, unpacks incoming function args
             """
             con_func = func(*args, **kwargs)
             con_func.next()
-            return con_func 
+            return con_func
         return _start
 
 
     @consumer
     def iter_tweet(self):
         """Return a generator object containing each non-blank text file line
+        
+        use send() to send it the latest line number
         """
         i = 0
         while self.lines:
