@@ -183,8 +183,8 @@ on position (digest ASC)')
     @consumer
     def iter_tweet(self):
         """Return a generator object containing each non-blank text file line
-        
-        use send() to send it the latest line number
+
+        Use send() to send it the latest line number
         """
         i = 0
         while self.lines:
