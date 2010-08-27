@@ -196,7 +196,9 @@ on position (digest ASC)')
         if comped.match(cur_line):
             logging.info(
             "New header line found on line %s. Content: %s",
-            self.position["lastline"] + 1, cur_line)
+            self.position["lastline"] + 1,
+            cur_line
+            )
             self.position["displayline"] = 1
             # counter skips the next line, since we're tweeting it
             self.position["lastline"] += 2
@@ -210,7 +212,8 @@ on position (digest ASC)')
             print """You're running the script for the first time, but none
 of your specified header words were matched. Your configuration details have
 been saved.\nPlease check the text file and re-run the script. Remember that
-headers are case-sensitive.\nThe first line is: \n%sHeader(s):\n%s""" \
+headers are case-sensitive.\nThe first line is: \n%sYou specified the \
+following header(s):\n%s""" \
             % (cur_line, " ".join(self.headers))
             logging.error("Didn't match header lines on first run, not \
 printing anything.")
