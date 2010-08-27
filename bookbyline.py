@@ -20,6 +20,7 @@ import re
 import hashlib
 import argparse
 import traceback
+import itertools
 
 try:
     import tweepy
@@ -165,36 +166,13 @@ on position (digest ASC)')
             "accsecret": row[8]
             }
 
-    # I have no idea how this works. But whoa. No need for a next(generator)
-    def consumer(func):
-        """
-        Decorator that allows us to skip initiating a generator with a next()
-        """
-        def _start(*args, **kwargs):
-            """
-            Initialiser, unpacks incoming function args
-            """
-            con_func = func(*args, **kwargs)
-            con_func.next()
-            return con_func
-        return _start
-
-
-    @consumer
-    def iter_tweet(self):
-        """Return a generator object containing each non-blank text file line
-
-        Use send() to send it the latest line number
-        """
-        i = 0
-        while self.lines:
-            val = (yield self.lines[i])
-            if val is not None:
-                i = val
-            else:
-                i += 1
-
-
+        # now slice the lines list so we have the next two untweeted lines
+        self.lines = itertools.islice(
+        self.lines,
+        row[1],
+        row[1] + 2,
+        None
+        )
     def format_tweet(self):
         """ Properly format an input string based on whether it's a header
         line, or a poetry line.
@@ -206,28 +184,26 @@ on position (digest ASC)')
         """
         # match against any single member of self.headers
         # re.match should be more efficient
-        getlines = self.iter_tweet()
-        # we're not doing anything with this, it's just an init
-        #next(getlines)
-        comped = re.compile("(%s)" % "|".join(self.headers))
         try:
-            initial_line = getlines.send(self.position["lastline"])
-        except IndexError:
+            cur_line = next(self.lines)
+        # means we've reached the end of the file
+        except StopIteration:
             logging.info("Reached %s EOF on line %s", self.sha,
             self.position["lastline"] - 1)
             raise
+        comped = re.compile("(%s)" % "|".join(self.headers))
         # If a header word is matched at the beginning of a line
-        if comped.match(initial_line):
+        if comped.match(cur_line):
             logging.info(
             "New header line found on line %s. Content: %s",
-            self.position["lastline"], self.lines[0])
+            self.position["lastline"] + 1, cur_line)
             self.position["displayline"] = 1
             # counter skips the next line, since we're tweeting it
             self.position["lastline"] += 2
-            self.position["prefix"] = initial_line
+            self.position["prefix"] = cur_line
             output_line = ('%s\nl. %s: %s') \
-            % (self.position["prefix"], str(self.position["displayline"]),
-            next(getlines).strip())
+            % (cur_line.strip(), str(self.position["displayline"]),
+            next(self.lines).strip())
             return output_line
         # no header match, so check to see if we're on line 0
         if self.position["lastline"] == 0:
@@ -235,7 +211,7 @@ on position (digest ASC)')
 of your specified header words were matched. Your configuration details have
 been saved.\nPlease check the text file and re-run the script. Remember that
 headers are case-sensitive.\nThe first line is: \n%sHeader(s):\n%s""" \
-            % (self.lines[0], " ".join(self.headers))
+            % (cur_line, " ".join(self.headers))
             logging.error("Didn't match header lines on first run, not \
 printing anything.")
             raise MatchError("No header match on initial run")
@@ -246,7 +222,7 @@ printing anything.")
             self.position["lastline"] += 1
             output_line = ('%sl. %s: %s') \
             % (self.position["prefix"], self.position["displayline"], \
-            initial_line.strip())
+            cur_line.strip())
             return output_line
 
     def emit_tweet(self, live_tweet):
