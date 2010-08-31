@@ -62,6 +62,7 @@ class MatchError(Exception):
     """Basic error which is raised if no header line is matched on initial run.
     """
     def __init__(self, detail):
+        Exception.__init__(self)
         self.error = detail
     def __str__(self):
         return repr(self.error)
@@ -90,7 +91,7 @@ class BookFromTextFile:
         # we're creating the digest from non-blank lines only, just because
         try:
             with fname:
-                self.lines = tuple([line for line in fname if line.strip()])
+                self.lines = tuple(line for line in fname if line.strip())
         except IOError:
             logging.critical("Couldn't read from file %s. exiting", fname)
             raise
