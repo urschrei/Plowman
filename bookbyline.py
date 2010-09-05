@@ -14,7 +14,7 @@ a header
 - a "live" switch, which will cause the line to be tweeted
 - a "verbose" switch, which will cause a full stack trace to be printed if an
 error occurs.
-The second argument can be given as a single word, or a comma-separated list
+The second argument can be given as a single word, or a space-separated list
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 
 """
