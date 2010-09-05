@@ -7,9 +7,14 @@ This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text.  The line position is stored in
 a sqlite3 database, which will be created in the current working directory.
-The module takes exactly two arguments: the file name (including path), and
-the text to match against in order to designate a header line.  The second
-argument can be given as a single word, or a comma-separated list
+The module takes a number of arguments: 
+- the file name (including path)
+- words whose presence at the beginning of a line will cause it to be treated as
+a header
+- a "live" switch, which will cause the line to be tweeted
+- a "verbose" switch, which will cause a full stack trace to be printed if an
+error occurs.
+The second argument can be given as a single word, or a comma-separated list
 Requires the Tweepy library: http://github.com/joshthecoder/tweepy
 
 """
