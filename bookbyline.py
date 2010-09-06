@@ -119,7 +119,7 @@ class BookFromTextFile:
                 # set up a new blank table
                 self.cursor.execute('CREATE TABLE position \
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-header TEXT, digest DOUBLE, conkey TEXT, consecret TEXT, \
+header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
 acckey TEXT, accsecret TEXT)')
                 self.cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
 on position (digest ASC)')
