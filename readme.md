@@ -45,7 +45,7 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 ## Arguments: ##
 
->`-h`, `--help` show this help text and exit  
+>`-h`, `--help` show help text and exit  
 >`-l` live switch: will tweet the line. If omitted, script prints to stdout  
 >`-file filename` the full path to a text file. **required**  
 >Example: `-file /usr/local/bin/plowman/poems/dc.txt`  
