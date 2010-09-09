@@ -180,7 +180,7 @@ on position (digest ASC)')
         None
         )
     def format_tweet(self):
-        """ Properly format an input string based on whether it's a header
+        """ Properly format an input string depending on whether it's a header
         line, or a poetry line.
 
         If the current line is a header (see self.headers),
