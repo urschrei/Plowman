@@ -211,6 +211,8 @@ class BookFromTextFile(object):
         self.database.row[1] + 2,
         None
         )
+
+
     def format_tweet(self):
         """ Properly format an input string depending on whether it's a header
         line, or a poetry line.
