@@ -148,6 +148,8 @@ on position (digest ASC)')
             logging.critical\
             ("Couldn't complete OAuth setup for %s. Unable to continue.", \
             self.book_digest)
+            # not much point in writing anything to the db in this case
+            self.connection.rollback()
             raise
         return oav
 
