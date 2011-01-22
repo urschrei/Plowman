@@ -73,81 +73,101 @@ class MatchError(Exception):
         return repr(self.error)
 
 
-def db_setup(book_digest):
+
+class DBconn(object):
     """ create a SQLite connection, or create a new db and table
     """
-    db_name = "tweet_books.sl3"
-    # create a tuple for db insertion
-    # NB do not use this value if you're explicitly specifying tuples
-    # see the insert statement, for instance
-    to_insert = (book_digest,)
-    try:
-        connection = sqlite3.connect(db_name)
-    except IOError:
-        logging.critical\
-        ("Couldn't read from, or create a db. That's a show-stopper.")
-        raise
-    with connection:
-        cursor = connection.cursor()
+    def __init__(self, digest = None):
+        db_name = "tweet_books.sl3"
+        # create a tuple for db insertion
+        # NB do not use this value if you're explicitly specifying tuples
+        # see the insert statement, for instance
+        self.book_digest = digest
+        to_insert = (self.book_digest,)
         try:
-            cursor.execute \
-            ('SELECT * FROM position WHERE digest = ?', to_insert)
-        except sqlite3.OperationalError:
-            logging.info("Couldn't find table \'position\'. Creating…")
-            # set up a new blank table
-            cursor.execute('CREATE TABLE position \
+            self.connection = sqlite3.connect(db_name)
+        except IOError:
+            logging.critical\
+            ("Couldn't read from, or create a db. That's a show-stopper.")
+            raise
+        with self.connection:
+            self.cursor = self.connection.cursor()
+            try:
+                self.cursor.execute \
+                ('SELECT * FROM position WHERE digest = ?', to_insert)
+            except sqlite3.OperationalError:
+                logging.info("Couldn't find table \'position\'. Creating…")
+                # set up a new blank table
+                self.cursor.execute('CREATE TABLE position \
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
 acckey TEXT, accsecret TEXT)')
-            cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
+                self.cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
 on position (digest ASC)')
-        # try to select the correct row, based on the SHA1 digest
-        row = cursor.fetchone()
-        if row == None:
-            with connection:
-                # no rows were returned, insert default values + new digest
-                logging.info\
-                ("New file found, inserting row.\nSHA1: %s", str(book_digest))
-                try:
-                    oavals = create_oauth()
-                except sqlite3.OperationalError:
-                    logging.critical(
-                    "Couldn't insert new row into table. Exiting")
-                    # close the SQLite connection, and quit
-                    raise
-                cursor.execute \
-                ('INSERT INTO position VALUES \
-                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, book_digest,
-                oavals["conkey"], oavals["consecret"],
-                oavals["acckey"], oavals["accsecret"]))
-                # and select it
-                cursor.execute \
-                ('SELECT * FROM position WHERE digest = ?', to_insert)
-                row = cursor.fetchone()
-        return row
+            # try to select the correct row, based on the SHA1 digest
+            self.row = self.cursor.fetchone()
+            if self.row == None:
+                with self.connection:
+                    # no rows were returned, insert default values + new digest
+                    logging.info(
+"New file found, inserting row.\nSHA1: %s", str(self.book_digest)
+                    )
+                    try:
+                        oavals = self.create_oauth()
+                    except sqlite3.OperationalError:
+                        logging.critical(
+                        "Couldn't insert new row into table. Exiting")
+                        # close the SQLite connection, and quit
+                        raise
+                    self.cursor.execute \
+                    ('INSERT INTO position VALUES \
+                    (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
+                    oavals["conkey"], oavals["consecret"],
+                    oavals["acckey"], oavals["accsecret"]))
+                    # and select it
+                    self.cursor.execute \
+                    ('SELECT * FROM position WHERE digest = ?', to_insert)
+                    self.row = self.cursor.fetchone()
 
 
-def create_oauth():
-    """ Obtain OAuth credentials and store them in the db
-    """
-    try:
-        # attempt to create OAuth credentials
-        import getOAuth
-    except ImportError:
-        logging.critical("Couldn't import getOAuth module")
-        raise
-    try:
-        oav = {}
-        getOAuth.get_creds(oav)
-    except tweepy.TweepError:
-        print "Couldn't complete OAuth setup. Fatal. Exiting."
-        logging.critical\
-        ("Couldn't complete OAuth setup. Unable to continue.")
-        raise
-    return oav
+    def create_oauth(self):
+        """ Obtain OAuth creds from Twitter, using the Tweepy lib
+        """
+        try:
+            # attempt to create OAuth credentials
+            import getOAuth
+        except ImportError:
+            logging.critical("Couldn't import getOAuth module")
+            raise
+        try:
+            oav = {}
+            getOAuth.get_creds(oav)
+        except tweepy.TweepError:
+            print "Couldn't complete OAuth setup for %s. Fatal. Exiting." \
+            % self.book_digest
+            logging.critical\
+            ("Couldn't complete OAuth setup for %s. Unable to continue.", \
+            self.book_digest)
+            raise
+        return oav
 
 
-class BookFromTextFile:
+    def write_vals(self, last_l, disp_l, prefix):
+        """ Write new line and header values to the db
+        """
+        with self.connection:
+            try:
+                self.cursor.execute('UPDATE position SET position = ?, \
+displayline = ?, header = ?, digest = ? WHERE digest = ?',
+                    (last_l, disp_l,
+                    prefix, self.book_digest, self.book_digest))
+            except (sqlite3.OperationalError, IndexError):
+                logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
+                raise
+
+
+
+class BookFromTextFile(object):
     """ Create a book object from a text file.
 
     Accepts two arguments:
@@ -170,26 +190,26 @@ class BookFromTextFile:
             logging.critical("Couldn't read from file %s. exiting", fname)
             raise
         self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
-        row = db_setup(self.sha)
+        self.database = DBconn(self.sha)
         # set instance attrs from the db
         self.position = {
-            "lastline": row[1],
-            "displayline": row[2],
-            "prefix": row[3]
+            "lastline": self.database.row[1],
+            "displayline": self.database.row[2],
+            "prefix": self.database.row[3]
             }
         # OAuth credentials
         self.oavals = {
-            "conkey": row[5],
-            "consecret": row[6],
-            "acckey": row[7],
-            "accsecret": row[8]
+            "conkey": self.database.row[5],
+            "consecret": self.database.row[6],
+            "acckey": self.database.row[7],
+            "accsecret": self.database.row[8]
             }
 
         # now slice the lines list so we have the next two untweeted lines
         self.lines = itertools.islice(
         self.lines,
-        row[1],
-        row[1] + 2,
+        self.database.row[1],
+        self.database.row[1] + 2,
         None
         )
     def format_tweet(self):
@@ -247,42 +267,34 @@ printing anything.")
             cur_line.strip())
             return output_line
 
+
     def emit_tweet(self, live_tweet):
         """Outputs string as a tweet or as message to stdout.
 
-        First call the format_tweet() function, which correctly formats
+        Calls the format_tweet() function, which correctly formats
         the current object's line[] members, depending
-        on what they are, then tweets the resulting string.  It then writes the
-        updated file position, line display number, and header values to the
-        db.
-
+        on what they are, writes the updated file position, line display number,
+        and header values to the db. then tweets the resulting string.
         """
         payload = self.format_tweet()
         auth = tweepy.OAuthHandler(self.oavals["conkey"],
         self.oavals["consecret"])
         auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
-        api = tweepy.API(auth, secure=True)
-        # don't print the line unless the db is updateable
-        conn = sqlite3.connect("tweet_books.sl3")
-        cursor = conn.cursor()
-        with conn:
-            try:
-                cursor.execute('UPDATE position SET position = ?, \
-displayline = ?, header = ?, digest = ? WHERE digest = ?',
-                (self.position["lastline"], self.position["displayline"],
-                self.position["prefix"], self.sha, self.sha))
-            except (sqlite3.OperationalError, IndexError):
-                logging.error("%s Couldn't update the db") % (str(sys.argv[0]))
-                raise
-            try:
-                if live_tweet == True:
-                    api.update_status(payload)
-                else:
-                    print payload
-            except tweepy.TweepError, err:
-                logging.error("%s Couldn't update status. Error was: %s") \
-                % (str(sys.argv[0]), err)
-                raise
+        api = tweepy.API(auth, secure = True)
+        try:
+            if live_tweet == True:
+                api.update_status(payload)
+            else:
+                print payload
+        except tweepy.TweepError, err:
+            logging.critical("Couldn't update status. Error was: %s", err)
+            raise
+        self.database.write_vals(
+            self.position["lastline"],
+            self.position["displayline"],
+            self.position["prefix"]
+            )
+
 
 
 def main():
