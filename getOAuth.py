@@ -44,7 +44,7 @@ for instructions. Be sure to choose "client", and "Read & Write access"
     token = autho.get_access_token(verifier=pin)
 
     # give user the access token
-    print "Access token:\n  Key: %s\n   Secret: %s" % (token.key, token.secret)
+    print "Access token:\n Key: %s\n Secret: %s" % (token.key, token.secret)
     creds["acckey"] = token.key
     creds["accsecret"] = token.secret
     return creds
