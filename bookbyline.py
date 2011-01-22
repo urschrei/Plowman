@@ -177,7 +177,6 @@ class BookFromTextFile(object):
     retrieve a row from a db matching the filename which was
     passed.  If no db is found, a new db, table, row and OAuth credentials
     are created.
-
     """
     def __init__(self, fname = None, hid = None):
         self.headers = hid
