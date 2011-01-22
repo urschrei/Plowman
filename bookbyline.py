@@ -72,6 +72,81 @@ class MatchError(Exception):
     def __str__(self):
         return repr(self.error)
 
+
+def db_setup(book_digest):
+    """ create a SQLite connection, or create a new db and table
+    """
+    db_name = "tweet_books.sl3"
+    # create a tuple for db insertion
+    # NB do not use this value if you're explicitly specifying tuples
+    # see the insert statement, for instance
+    to_insert = (book_digest,)
+    try:
+        connection = sqlite3.connect(db_name)
+    except IOError:
+        logging.critical\
+        ("Couldn't read from, or create a db. That's a show-stopper.")
+        raise
+    with connection:
+        cursor = connection.cursor()
+        try:
+            cursor.execute \
+            ('SELECT * FROM position WHERE digest = ?', to_insert)
+        except sqlite3.OperationalError:
+            logging.info("Couldn't find table \'position\'. Creating…")
+            # set up a new blank table
+            cursor.execute('CREATE TABLE position \
+(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
+header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
+acckey TEXT, accsecret TEXT)')
+            cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
+on position (digest ASC)')
+        # try to select the correct row, based on the SHA1 digest
+        row = cursor.fetchone()
+        if row == None:
+            with connection:
+                # no rows were returned, insert default values + new digest
+                logging.info\
+                ("New file found, inserting row.\nSHA1: %s", str(book_digest))
+                try:
+                    oavals = create_oauth()
+                except sqlite3.OperationalError:
+                    logging.critical(
+                    "Couldn't insert new row into table. Exiting")
+                    # close the SQLite connection, and quit
+                    raise
+                cursor.execute \
+                ('INSERT INTO position VALUES \
+                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, book_digest,
+                oavals["conkey"], oavals["consecret"],
+                oavals["acckey"], oavals["accsecret"]))
+                # and select it
+                cursor.execute \
+                ('SELECT * FROM position WHERE digest = ?', to_insert)
+                row = cursor.fetchone()
+        return row
+
+
+def create_oauth():
+    """ Obtain OAuth credentials and store them in the db
+    """
+    try:
+        # attempt to create OAuth credentials
+        import getOAuth
+    except ImportError:
+        logging.critical("Couldn't import getOAuth module")
+        raise
+    try:
+        oav = {}
+        getOAuth.get_creds(oav)
+    except tweepy.TweepError:
+        print "Couldn't complete OAuth setup. Fatal. Exiting."
+        logging.critical\
+        ("Couldn't complete OAuth setup. Unable to continue.")
+        raise
+    return oav
+
+
 class BookFromTextFile:
     """ Create a book object from a text file.
 
@@ -85,13 +160,7 @@ class BookFromTextFile:
 
     """
     def __init__(self, fname = None, hid = None):
-        # will contain OAuth keys
-        self.oavals = {}
-        # will contain text file position, line and current prefix values
-        self.position = {}
         self.headers = hid
-        db_name = "tweet_books.sl3"
-
         # try to open the specified text file to read, and get its SHA1 digest
         # we're creating the digest from non-blank lines only, just because
         try:
@@ -101,70 +170,14 @@ class BookFromTextFile:
             logging.critical("Couldn't read from file %s. exiting", fname)
             raise
         self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
-        sl_digest = (self.sha,)
-        # create a SQLite connection, or create a new db and table
-        try:
-            self.connection = sqlite3.connect(db_name)
-        except IOError:
-            logging.critical\
-            ("Couldn't read from, or create a db. That's a show-stopper.")
-            raise
-        with self.connection:
-            self.cursor = self.connection.cursor()
-            try:
-                self.cursor.execute \
-                ('SELECT * FROM position WHERE digest = ?',sl_digest)
-            except sqlite3.OperationalError:
-                logging.info("Couldn't find table \'position\'. Creating…")
-                # set up a new blank table
-                self.cursor.execute('CREATE TABLE position \
-(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
-acckey TEXT, accsecret TEXT)')
-                self.cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
-on position (digest ASC)')
-            # try to select the correct row, based on the SHA1 digest
-            row = self.cursor.fetchone()
-            if row == None:
-                with self.connection:
-                    # no rows were returned, insert default values + new digest
-                    logging.info\
-                    ("New file found, inserting row.\nSHA1: %s", str(self.sha))
-                    try:
-                        # attempt to create OAuth credentials
-                        import getOAuth
-                    except ImportError:
-                        logging.critical("Couldn't import getOAuth module")
-                        raise
-                    try:
-                        getOAuth.get_creds(self.oavals)
-                    except tweepy.TweepError:
-                        print "Couldn't complete OAuth setup. Fatal. Exiting."
-                        logging.critical\
-                        ("Couldn't complete OAuth setup. Unable to continue.")
-                        raise
-                    try:
-                        self.cursor.execute \
-                        ('INSERT INTO position VALUES \
-                        (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.sha,
-                        self.oavals["conkey"], self.oavals["consecret"],
-                        self.oavals["acckey"], self.oavals["accsecret"]))
-                        # and select it
-                        self.cursor.execute \
-                        ('SELECT * FROM position WHERE digest = ?',sl_digest)
-                        row = self.cursor.fetchone()
-                    except sqlite3.OperationalError:
-                        logging.critical(
-                        "Couldn't insert new row into table. Exiting")
-                        # close the SQLite connection, and quit
-                        raise
-
+        row = db_setup(self.sha)
         # set instance attrs from the db
         self.position = {
             "lastline": row[1],
             "displayline": row[2],
             "prefix": row[3]
             }
+        # OAuth credentials
         self.oavals = {
             "conkey": row[5],
             "consecret": row[6],
@@ -250,9 +263,11 @@ printing anything.")
         auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
         api = tweepy.API(auth, secure=True)
         # don't print the line unless the db is updateable
-        with self.connection:
+        conn = sqlite3.connect("tweet_books.sl3")
+        cursor = conn.cursor()
+        with conn:
             try:
-                self.cursor.execute('UPDATE position SET position = ?, \
+                cursor.execute('UPDATE position SET position = ?, \
 displayline = ?, header = ?, digest = ? WHERE digest = ?',
                 (self.position["lastline"], self.position["displayline"],
                 self.position["prefix"], self.sha, self.sha))
