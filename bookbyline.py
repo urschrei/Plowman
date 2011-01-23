@@ -96,13 +96,15 @@ class DBconn(object):
                 ('SELECT * FROM position WHERE digest = ?', to_insert)
             except sqlite3.OperationalError:
                 logging.info("Couldn't find table \'position\'. Creating…")
-                # set up a new blank table
-                self.cursor.execute('CREATE TABLE position \
+                # set up a new blank table and index
+                self.schema = 'CREATE TABLE position \
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
-acckey TEXT, accsecret TEXT)')
-                self.cursor.execute('CREATE UNIQUE INDEX \"digest_idx\" \
-on position (digest ASC)')
+acckey TEXT, accsecret TEXT)'
+                self.idx = 'CREATE UNIQUE INDEX \"digest_idx\" \
+on position (digest ASC)'
+                self.cursor.execute(self.schema)
+                self.cursor.execute(self.idx)
             # try to select the correct row, based on the SHA1 digest
             self.row = self.cursor.fetchone()
             if self.row == None:
