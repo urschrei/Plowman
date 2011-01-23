@@ -1,0 +1,7 @@
+This is a test file
+
+It has some blank lines in it
+
+They'll be stripped by a function which we test
+
+That's all really
