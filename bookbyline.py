@@ -60,7 +60,6 @@ space. Example - Purgatory: BOOK Passus", nargs = "+",
 required = True)
 parser.add_argument("-v", help = "Print stack trace to stdout",
 action = "store_true", default = False, dest = "errs")
-fromcl = parser.parse_args()
 
 
 class MatchError(Exception):
@@ -313,6 +312,7 @@ def get_hash(sha_dig):
 def main():
     """ Main function.
     """
+    fromcl = parser.parse_args()
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
     input_book.emit_tweet(fromcl.live)
 
