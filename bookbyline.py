@@ -64,7 +64,7 @@ fromcl = parser.parse_args()
 
 
 class MatchError(Exception):
-    """Basic error which is raised if no header line is matched on initial run.
+    """ Basic error which is raised if no header line is matched on initial run.
     """
     def __init__(self, detail):
         Exception.__init__(self)
@@ -75,7 +75,7 @@ class MatchError(Exception):
 
 
 class DBconn(object):
-    """ create a SQLite connection, or create a new db and table
+    """ Create a SQLite connection, or create a new db and table
     """
     def __init__(self, digest = None):
         db_name = "tweet_books.sl3"
