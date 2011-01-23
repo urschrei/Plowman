@@ -79,12 +79,12 @@ class MatchError(Exception):
 class DBconn(object):
     """ Create a SQLite connection, or create a new db and table
     """
-    def __init__(self, digest = None, loc = None):
-        db_name = loc
+    def __init__(self, digest = None, loc = 'tweet_books.sl3'):
         # create a tuple for db insertion
         # NB do not use this value if you're explicitly specifying tuples
         # see the insert statement, for instance
         self.book_digest = digest
+        db_name = loc
         to_insert = (self.book_digest,)
         try:
             self.connection = sqlite3.connect(db_name)
@@ -191,7 +191,7 @@ class BookFromTextFile(object):
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
         # try to open a db connection
-        self.database = DBconn(self.sha, "tweet_books.sl3")
+        self.database = DBconn(self.sha)
         # set instance attrs from the db
         self.position = {
             "lastline": self.database.row[1],
