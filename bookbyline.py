@@ -182,15 +182,11 @@ class BookFromTextFile(object):
     """
     def __init__(self, fname = None, hid = None):
         self.headers = hid
-        # try to open the specified text file to read, and get its SHA1 digest
-        # we're creating the digest from non-blank lines only, just because
-        try:
-            with fname:
-                self.lines = tuple(line for line in fname if line.strip())
-        except IOError:
-            logging.critical("Couldn't read from file %s. exiting", fname)
-            raise
-        self.sha = hashlib.sha1("".join(self.lines)).hexdigest()
+        # try to read the specified text file
+        self.lines = imp_file(fname)
+        # try to get hash of returned list
+        self.sha = get_hash(self.lines)
+        # try to open a db connection
         self.database = DBconn(self.sha)
         # set instance attrs from the db
         self.position = {
@@ -198,14 +194,13 @@ class BookFromTextFile(object):
             "displayline": self.database.row[2],
             "prefix": self.database.row[3]
             }
-        # OAuth credentials
+        # set OAuth credentials
         self.oavals = {
             "conkey": self.database.row[5],
             "consecret": self.database.row[6],
             "acckey": self.database.row[7],
             "accsecret": self.database.row[8]
             }
-
         # now slice the lines list so we have the next two untweeted lines
         self.lines = itertools.islice(
         self.lines,
@@ -222,7 +217,6 @@ class BookFromTextFile(object):
         If the current line is a header (see self.headers),
         we join the next line and reset the line number to 1.
         Prints a properly-formatted poetry line, including book/canto/line.
-
         """
         # match against any single member of self.headers
         # re.match should be more efficient
@@ -272,7 +266,7 @@ printing anything.")
 
 
     def emit_tweet(self, live_tweet):
-        """Outputs string as a tweet or as message to stdout.
+        """ Outputs string as a tweet or as message to stdout.
 
         Calls the format_tweet() function, which correctly formats
         the current object's line[] members, depending
@@ -300,8 +294,24 @@ printing anything.")
 
 
 
+def imp_file(in_file):
+    """ Try to import a text file, strip blank lines, format as a list
+    """
+    try:
+        with in_file:
+            return tuple(line for line in in_file if line.strip())
+    except IOError:
+        logging.critical("Couldn't read from file %s. exiting", in_file)
+
+
+def get_hash(sha_dig):
+    """ Derive SHA1 hash of a list
+    """
+    return hashlib.sha1("".join(sha_dig)).hexdigest()
+
+
 def main():
-    """ main function.
+    """ Main function.
     """
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
     input_book.emit_tweet(fromcl.live)
