@@ -293,12 +293,11 @@ printing anything.")
 
 
 
-def imp_file(in_file):
+def imp_file(list_from_file):
     """ Try to import a text file, strip blank lines, format as a list
     """
     try:
-        with in_file:
-            return tuple(line for line in in_file if line.strip())
+        return tuple(line for line in list_from_file if line.strip())
     except IOError:
         logging.critical("Couldn't read from file %s. exiting", in_file)
 
