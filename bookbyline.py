@@ -76,8 +76,8 @@ class MatchError(Exception):
 class DBconn(object):
     """ Create a SQLite connection, or create a new db and table
     """
-    def __init__(self, digest = None):
-        db_name = "tweet_books.sl3"
+    def __init__(self, digest = None, loc = None):
+        db_name = loc
         # create a tuple for db insertion
         # NB do not use this value if you're explicitly specifying tuples
         # see the insert statement, for instance
@@ -188,7 +188,7 @@ class BookFromTextFile(object):
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
         # try to open a db connection
-        self.database = DBconn(self.sha)
+        self.database = DBconn(self.sha, "tweet_books.sl3")
         # set instance attrs from the db
         self.position = {
             "lastline": self.database.row[1],
@@ -301,7 +301,7 @@ def imp_file(list_from_file):
     try:
         return tuple(line for line in list_from_file if line.strip())
     except IOError:
-        logging.critical("Couldn't read from file %s. exiting", in_file)
+        logging.critical("Couldn't read from file %s. exiting", list_from_file)
 
 
 def get_hash(sha_dig):
