@@ -27,7 +27,7 @@ for instructions. Be sure to choose "client", and "Read & Write access"
     inp = raw_input("Press Return to continue, or q then Return to quit...")
     if inp == "q":
         print "Abandoning OAuth process."
-        raise tweepy.TweepError("OAuth process was abandoned")
+        raise tweepy.TweepError("OAuth process was abandoned by user")
     webbrowser.open("http://dev.twitter.com/apps/new")
     creds["conkey"] = (raw_input('Consumer Key: ').strip())
     creds["consecret"] = (raw_input('Consumer Secret: ').strip())
