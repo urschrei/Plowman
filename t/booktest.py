@@ -7,7 +7,7 @@ sys.path.insert(0, '..')
 
 import bookbyline
 
-class KnownValues(unittest.TestCase):
+class BookTests(unittest.TestCase):
 
     # provide known correct SHA1 hash of a list of strings
     knownValues = ((['a', 'b', 'c', 'd', 'e'],
@@ -18,7 +18,7 @@ class KnownValues(unittest.TestCase):
         lines = f.readlines()
 
 
-    def testBookByLineKnownValues(self):
+    def testBookByLineHashMethod(self):
         """ Should return a SHA1 hash for a given list of strings
         """
         for string, sha_hash in self.knownValues:
@@ -27,10 +27,18 @@ class KnownValues(unittest.TestCase):
 
 
     def testBookByLineImpFile(self):
-        """ Should return a tuple containing no blank lines
+        """ Should return a tuple
         """
         result = bookbyline.imp_file(self.lines)
         self.assertTrue(type(result) == tuple)
+
+
+    def testBookByLineTupleContents(self):
+        """ Tuple should contain no blank lines
+        """
+        result = bookbyline.imp_file(self.lines)
+        for r in result:
+            self.assertTrue(r != '\n')
 
 
 
