@@ -89,16 +89,20 @@ class DBconn(object):
         try:
             self.connection = sqlite3.connect(db_name)
         except IOError:
-            logging.critical\
-            ("Couldn't read from, or create a db. That's a show-stopper.")
+            logging.critical(
+            "Couldn't read from, or create a db. That's a show-stopper."
+            )
             raise
         with self.connection:
             self.cursor = self.connection.cursor()
             try:
-                self.cursor.execute \
-                ('SELECT * FROM position WHERE digest = ?', to_insert)
+                self.cursor.execute(
+                'SELECT * FROM position WHERE digest = ?', to_insert
+                )
             except sqlite3.OperationalError:
-                logging.info("Couldn't find table \'position\'. Creating…")
+                logging.info(
+                "Couldn't find table \'position\'. Creating…"
+                )
                 # set up a new blank table and index
                 self.schema = 'CREATE TABLE position \
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
