@@ -201,10 +201,18 @@ class BookFromTextFile(object):
     """
     def __init__(self, fname = None, hid = None):
         self.headers = hid
+        self.database = None
+        self.oavals = None
+        self.position = None
         # try to read the specified text file
         self.lines = imp_file(fname)
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
+
+
+    def open_connection(self):
+        """ Open/create a db, and retrieve/insert a row based on SHA1 hash
+        """
         # try to open a db connection
         self.database = DBconn(self.sha)
         self.database.open_connection()
@@ -335,6 +343,7 @@ def main():
     """
     fromcl = parser.parse_args()
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
+    input_book.open_connection()
     input_book.emit_tweet(fromcl.live)
 
 
