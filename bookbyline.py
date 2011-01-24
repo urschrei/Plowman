@@ -84,10 +84,18 @@ class DBconn(object):
         # NB do not use this value if you're explicitly specifying tuples
         # see the insert statement, for instance
         self.book_digest = digest
-        db_name = loc
-        to_insert = (self.book_digest,)
+        self.db_name = loc
+        self.schema = 'CREATE TABLE position \
+(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
+header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
+acckey TEXT, accsecret TEXT)'
+
+
+    def open_connection(self):
+        """ Open a db connection, or create a new db
+        """
         try:
-            self.connection = sqlite3.connect(db_name)
+            self.connection = sqlite3.connect(self.db_name)
         except IOError:
             logging.critical(
             "Couldn't read from, or create a db. That's a show-stopper."
@@ -97,48 +105,50 @@ class DBconn(object):
             self.cursor = self.connection.cursor()
             try:
                 self.cursor.execute(
-                'SELECT * FROM position WHERE digest = ?', to_insert
+                'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
                 )
             except sqlite3.OperationalError:
                 logging.info(
                 "Couldn't find table \'position\'. Creating…"
                 )
                 # set up a new blank table and index
-                self.schema = 'CREATE TABLE position \
-(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
-acckey TEXT, accsecret TEXT)'
-                self.idx = 'CREATE UNIQUE INDEX \"digest_idx\" \
+                idx = 'CREATE UNIQUE INDEX \"digest_idx\" \
 on position (digest ASC)'
                 self.cursor.execute(self.schema)
-                self.cursor.execute(self.idx)
-            # try to select the correct row, based on the SHA1 digest
-            self.row = self.cursor.fetchone()
-            if self.row == None:
-                with self.connection:
-                    # no rows were returned, insert default values + new digest
-                    logging.info(
+                self.cursor.execute(idx)
+
+
+    def get_row(self):
+        """ Select a row based on the input file SHA1 hash, or create a new
+        entry, and new OAuth credentials
+        """
+        # try to select the correct row, based on the SHA1 digest
+        self.row = self.cursor.fetchone()
+        if self.row == None:
+            with self.connection:
+                # no rows were returned, insert default values + new digest
+                logging.info(
 "New file found, inserting row.\nSHA1: %s", str(self.book_digest)
                     )
-                    try:
-                        oavals = self.create_oauth()
-                    except sqlite3.OperationalError:
-                        logging.critical(
-                        "Couldn't insert new row into table. Exiting")
-                        # close the SQLite connection, and quit
-                        raise
-                    self.cursor.execute \
-                    ('INSERT INTO position VALUES \
-                    (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
-                    oavals["conkey"], oavals["consecret"],
-                    oavals["acckey"], oavals["accsecret"]))
-                    # and select it
-                    self.cursor.execute \
-                    ('SELECT * FROM position WHERE digest = ?', to_insert)
-                    self.row = self.cursor.fetchone()
+                try:
+                    oavals = self._create_oauth()
+                except sqlite3.OperationalError:
+                    logging.critical(
+                    "Couldn't insert new row into table. Exiting")
+                    # close the SQLite connection, and quit
+                    raise
+                self.cursor.execute \
+                ('INSERT INTO position VALUES \
+                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
+                oavals["conkey"], oavals["consecret"],
+                oavals["acckey"], oavals["accsecret"]))
+                # and select it
+                self.cursor.execute \
+                ('SELECT * FROM position WHERE digest = ?', (self.book_digest,))
+                self.row = self.cursor.fetchone()
 
 
-    def create_oauth(self):
+    def _create_oauth(self):
         """ Obtain OAuth creds from Twitter, using the Tweepy lib
         """
         try:
@@ -154,7 +164,7 @@ on position (digest ASC)'
             print "Couldn't complete OAuth setup for %s. Fatal. Exiting.\n\
 Error was: %s" % (self.book_digest, err)
             logging.critical(
-            "Couldn't complete OAuth setup for %s. Error was: %s",\
+            "Couldn't complete OAuth setup for %s.\nError was: %s",\
             self.book_digest, err
             )
             # not much point in writing anything to the db in this case
@@ -197,6 +207,8 @@ class BookFromTextFile(object):
         self.sha = get_hash(self.lines)
         # try to open a db connection
         self.database = DBconn(self.sha)
+        self.database.open_connection()
+        self.database.get_row()
         # set instance attrs from the db
         self.position = {
             "lastline": self.database.row[1],
