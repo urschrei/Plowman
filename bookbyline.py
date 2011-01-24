@@ -146,12 +146,13 @@ on position (digest ASC)'
         try:
             oav = {}
             getOAuth.get_creds(oav)
-        except tweepy.TweepError:
-            print "Couldn't complete OAuth setup for %s. Fatal. Exiting." \
-            % self.book_digest
-            logging.critical\
-            ("Couldn't complete OAuth setup for %s. Unable to continue.", \
-            self.book_digest)
+        except tweepy.TweepError, err:
+            print "Couldn't complete OAuth setup for %s. Fatal. Exiting.\n\
+Error was: %s" % (self.book_digest, err)
+            logging.critical(
+            "Couldn't complete OAuth setup for %s. Error was: %s",\
+            self.book_digest, err
+            )
             # not much point in writing anything to the db in this case
             self.connection.rollback()
             raise
