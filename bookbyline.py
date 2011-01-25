@@ -207,8 +207,11 @@ class BookFromTextFile(object):
         self.database = None
         self.oavals = None
         self.position = None
-        # try to read the specified text file
-        self.lines = imp_file(fname)
+        # if it's not a file object, command-line parser didn't fire
+        if type(fname) != file:
+            self.lines = open_file(fname)
+        else:
+            self.lines = imp_file(fname)
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
 
@@ -324,6 +327,15 @@ printing anything.")
             self.position["prefix"]
             )
 
+
+def open_file(to_read):
+    """ Open a text file for reading
+        if this module is imported, the command-line parser won't be
+        called, so we need this to give us a file object, which can then be
+        passed to imp_file()
+    """
+    with open(to_read, 'r') as got_a_file:
+        return imp_file(got_a_file)
 
 
 def imp_file(list_from_file):
