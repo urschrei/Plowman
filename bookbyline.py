@@ -89,6 +89,9 @@ class DBconn(object):
 (id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
 header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
 acckey TEXT, accsecret TEXT)'
+        self.connection = None
+        self.cursor = None
+        self.row = None
 
 
     def open_connection(self):
