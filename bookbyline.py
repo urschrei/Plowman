@@ -7,7 +7,7 @@ This module reads a text file from disk, and tweets properly-
 formatted lines from it, one or two lines at a time, depending on
 whether it's a header line, or body text.  The line position is stored in
 a sqlite3 database, which will be created in the current working directory.
-The module takes a number of arguments: 
+The module takes a number of arguments:
 - the file name (including path)
 - words whose presence at the beginning of a line will cause it to be treated as
 a header
@@ -37,6 +37,7 @@ http://github.com/joshthecoder/tweepy"
 
 
 # logging stuff
+# could also do: LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG,
 format='%(asctime)s %(levelname)s %(message)s',
 datefmt='%a, %d %b %Y %H:%M:%S',
@@ -207,11 +208,7 @@ class BookFromTextFile(object):
         self.database = None
         self.oavals = None
         self.position = None
-        # if it's not a file object, command-line parser didn't fire
-        if type(fname) != file:
-            self.lines = open_file(fname)
-        else:
-            self.lines = imp_file(fname)
+        self.lines = gimme_lines(fname, open_file, imp_file)
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
 
@@ -330,8 +327,9 @@ printing anything.")
 
 def open_file(to_read):
     """ Open a text file for reading
+
         if this module is imported, the command-line parser won't be
-        called, so we need this to give us a file object, which can then be
+        called, so we need this to give us a file object, which is then
         passed to imp_file()
     """
     with open(to_read, 'r') as got_a_file:
@@ -339,12 +337,24 @@ def open_file(to_read):
 
 
 def imp_file(list_from_file):
-    """ Try to import a text file, strip blank lines, format as a list
+    """ Try to import a text file, strip its blank lines, and return a tuple
     """
     try:
         return tuple(line for line in list_from_file if line.strip())
     except IOError:
         logging.critical("Couldn't read from file %s. exiting", list_from_file)
+
+
+def gimme_lines(fname, not_file, is_file):
+    """ Checks to see if fname is a file object
+
+    if it is, it's read into a list
+    if it isn't, it's opened for reading first, then read into a list
+    """
+    if type(fname) != file:
+        return not_file(fname)
+    else:
+        return is_file(fname)
 
 
 def get_hash(sha_dig):
