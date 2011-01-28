@@ -15,7 +15,7 @@ a header
 - a "verbose" switch, which will cause a full stack trace to be printed if an
 error occurs.
 The second argument can be given as a single word, or a space-separated list
-Requires the Tweepy library: http://github.com/joshthecoder/tweepy
+This module requires the Tweepy library: http://github.com/joshthecoder/tweepy
 
 """
 import sys
@@ -31,10 +31,10 @@ try:
     import tweepy
 except ImportError:
     print "The tweepy module could not be found.\n\
+
 Please install using easy_install, or obtain it from GitHub at \n\
 http://github.com/joshthecoder/tweepy"
     sys.exit()
-
 
 # logging stuff
 # could also do: LOG = logging.getLogger(__name__)
