@@ -9,13 +9,34 @@ import bookbyline
 
 class BookTests(unittest.TestCase):
 
-    # provide known correct SHA1 hash of a list of strings
-    knownValues = ((['a', 'b', 'c', 'd', 'e'],
-    '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
-    )
-    # read lines from a test text file
-    with open('test_file.txt', 'r') as f:
-        lines = f.readlines()
+    # create Book and DB instance
+    @classmethod
+    def setUpClass(cls):
+        cls._book = bookbyline.BookFromTextFile('test_file.txt', 'It')
+        cls._database = bookbyline.DBconn('abc', ':memory:')
+
+
+    # destroy Book and DB instance
+    @classmethod
+    def tearDownClass(cls):
+        del cls._book
+        del cls._database
+
+
+    def setUp(self):
+        # provide known correct SHA1 hash of a list of strings
+        self.knownValues = ((['a', 'b', 'c', 'd', 'e'],
+        '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
+        )
+        # read lines from a test text file
+        with open('test_file.txt', 'r') as f:
+            self.lines = f.readlines()
+        self._database.open_connection()
+
+
+    def tearDown(self):
+        del self.knownValues
+        del self.lines
 
 
     def testBookByLineHashMethod(self):
@@ -41,8 +62,17 @@ class BookTests(unittest.TestCase):
             self.assertTrue(r != '\n')
 
 
+    def testBookFileHashIncorrect(self):
+        """ Should fail, because the SHA property should be valid """
+        self.assertNotEqual(self._book.sha, 'abc')
 
 
+    def testBookFileHashCorrect(self):
+        """ Class property should be equal to known correct value
+        """
+        self.assertEqual(
+        self._book.sha,
+        'dd5c938011a40a91c49ca9564f3aac40b67c8d27')
 
 
 if __name__ == "__main__":
