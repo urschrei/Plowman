@@ -33,7 +33,7 @@ except ImportError:
     print "The tweepy module could not be found.\n\
 Please install using easy_install, or obtain it from GitHub at \n\
 http://github.com/joshthecoder/tweepy"
-    sys.exit()
+    raise
 
 # logging stuff
 # could also do: LOG = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class MatchError(Exception):
 class DBconn(object):
     """ Create a SQLite connection, or create a new db and table
     """
-    def __init__(self, digest = None, loc = 'tweet_books.sl3'):
+    def __init__(self, digest = None, loc = None):
         # create a tuple for db insertion
         # NB do not use this value if you're explicitly specifying tuples
         # see the insert statement, for instance
@@ -212,11 +212,11 @@ class BookFromTextFile(object):
         self.sha = get_hash(self.lines)
 
 
-    def open_connection(self):
+    def get_db(self, dbname = 'tweet_books.sl3'):
         """ Open/create a db, and retrieve/insert a row based on SHA1 hash
         """
         # try to open a db connection
-        self.database = DBconn(self.sha)
+        self.database = DBconn(self.sha, dbname)
         self.database.open_connection()
         self.database.get_row()
         # set instance attrs from the db
@@ -367,7 +367,7 @@ def main():
     """
     fromcl = parser.parse_args()
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
-    input_book.open_connection()
+    input_book.get_db()
     input_book.emit_tweet(fromcl.live)
 
 
