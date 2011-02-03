@@ -31,7 +31,6 @@ try:
     import tweepy
 except ImportError:
     print "The tweepy module could not be found.\n\
-
 Please install using easy_install, or obtain it from GitHub at \n\
 http://github.com/joshthecoder/tweepy"
     sys.exit()
