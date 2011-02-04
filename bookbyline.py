@@ -140,15 +140,17 @@ on position (digest ASC)'
                     "Couldn't insert new row into table. Exiting")
                     # close the SQLite connection, and quit
                     raise
-                self.cursor.execute \
-                ('INSERT INTO position VALUES \
-                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
-                oavals["conkey"], oavals["consecret"],
-                oavals["acckey"], oavals["accsecret"]))
-                # and select it
-                self.cursor.execute \
-                ('SELECT * FROM position WHERE digest = ?', (self.book_digest,))
+                self._insert_values(oavals)
                 self.row = self.cursor.fetchone()
+
+    def _insert_values(self, oavals):
+        """ Insert OAuth keys and file digest into newly-created db
+        """
+        self.cursor.execute \
+        ('INSERT INTO position VALUES \
+        (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
+        oavals["conkey"], oavals["consecret"],
+        oavals["acckey"], oavals["accsecret"]))
 
 
     def _create_oauth(self):
