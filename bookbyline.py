@@ -374,8 +374,7 @@ def main():
     """
     fromcl = parser.parse_args()
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
-    database = DBconn(input_book.sha)
-    input_book.get_db(database)
+    input_book.get_db(DBconn(input_book.sha))
     input_book.emit_tweet(fromcl.live)
 
 
