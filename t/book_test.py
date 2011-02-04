@@ -31,13 +31,17 @@ class BookTests(unittest.TestCase):
         # read lines from a test text file
         with open('test_file.txt', 'r') as f:
             self.lines = f.readlines()
+        # ensure we have a clean position table prior to each test
+        self._database.cursor.execute(
+        'DELETE FROM position WHERE id < 100'
+        )
+        self._database.connection.commit()
         # made-up OAauth values
         self._database.oavals = {}
         self._database.oavals['conkey'] = 'A'
         self._database.oavals['consecret'] = 'B'
         self._database.oavals['acckey'] = 'C'
         self._database.oavals['accsecret'] = 'D'
-        # insert them into the db
 
 
     def tearDown(self):
