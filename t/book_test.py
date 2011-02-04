@@ -52,7 +52,6 @@ class BookTests(unittest.TestCase):
     def testCreateDB(self):
         """ Should create a sqlite3 database in memory
         """
-        self._database.open_connection()
         self.assertTrue(type(self._database.connection), 'sqlite3.Connection')
 
 
@@ -60,10 +59,18 @@ class BookTests(unittest.TestCase):
         """ Should be able to insert rows into the db
             the db digest value should be the same as the book object's
         """
-        self._database.open_connection()
         self._database._insert_values(self._database.oavals)
         self._database.get_row()
-        self.assertEqual(self._database.row[4],self._book.sha)
+        self.assertEqual(self._database.row[4], self._book.sha)
+
+
+    def testCreateDatabaseConnectionFromBook(self):
+        """ Test that values are returned from db to book object
+        """
+        self._database._insert_values(self._database.oavals)
+        self._book.get_db(self._database)
+        self.assertEqual(self._book.oavals['conkey'], 'A')
+        self.assertTrue(type(self._book.lines), 'itertools.islice object')
 
 
     def testBookByLineHashMethod(self):
