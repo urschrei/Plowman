@@ -151,6 +151,9 @@ on position (digest ASC)'
         (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
         oavals["conkey"], oavals["consecret"],
         oavals["acckey"], oavals["accsecret"]))
+        self.cursor.execute(
+        'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
+        )
 
 
     def _create_oauth(self):
