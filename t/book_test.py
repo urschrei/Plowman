@@ -13,7 +13,7 @@ class BookTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._book = bookbyline.BookFromTextFile('test_file.txt', 'It')
-        cls._database = bookbyline.DBconn('abc', ':memory:')
+        cls._database = bookbyline.DBconn(cls._book.sha, ':memory:')
 
 
     # destroy Book and DB instance
@@ -31,13 +31,27 @@ class BookTests(unittest.TestCase):
         # read lines from a test text file
         with open('test_file.txt', 'r') as f:
             self.lines = f.readlines()
-        self._database.open_connection()
+        # made-up OAauth values
+        self._database.oavals = {}
+        self._database.oavals['conkey'] = 'A'
+        self._database.oavals['consecret'] = 'B'
+        self._database.oavals['acckey'] = 'C'
+        self._database.oavals['accsecret'] = 'D'
+        # insert some made-up values
 
 
     def tearDown(self):
         del self.knownValues
         del self.lines
 
+    def testCreateDatabaseFail(self):
+        """ Should create a sqlite3 database in memory, and insert a row
+        based on input file hash. Passes if a row is successfully inserted
+        """
+        self._database.open_connection()
+        self._database._insert_values(self._database.oavals)
+        self._database.get_row()
+        self.assertNotEqual(self._database.row[4],'blah')
 
     def testBookByLineHashMethod(self):
         """ Should return a SHA1 hash for a given list of strings
@@ -63,7 +77,8 @@ class BookTests(unittest.TestCase):
 
 
     def testBookFileHashIncorrect(self):
-        """ Should fail, because the SHA property should be valid """
+        """ Should fail, because the SHA property should be valid
+        """
         self.assertNotEqual(self._book.sha, 'abc')
 
 
