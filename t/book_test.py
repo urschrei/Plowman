@@ -12,7 +12,7 @@ class BookTests(unittest.TestCase):
     # create Book and DB instance
     @classmethod
     def setUpClass(cls):
-        cls._book = bookbyline.BookFromTextFile('test_file.txt', 'It')
+        cls._book = bookbyline.BookFromTextFile('test_file.txt', 'This')
         cls._database = bookbyline.DBconn(cls._book.sha, ':memory:')
 
 
@@ -37,21 +37,30 @@ class BookTests(unittest.TestCase):
         self._database.oavals['consecret'] = 'B'
         self._database.oavals['acckey'] = 'C'
         self._database.oavals['accsecret'] = 'D'
-        # insert some made-up values
+        # insert them into the db
 
 
     def tearDown(self):
         del self.knownValues
         del self.lines
 
-    def testCreateDatabaseFail(self):
-        """ Should create a sqlite3 database in memory, and insert a row
-        based on input file hash. Passes if a row is successfully inserted
+
+    def testCreateDB(self):
+        """ Should create a sqlite3 database in memory
+        """
+        self._database.open_connection()
+        self.assertTrue(type(self._database.connection), 'sqlite3.Connection')
+
+
+    def testInsertValuesIntoDB(self):
+        """ Should be able to insert rows into the db
+            the db digest value should be the same as the book object's
         """
         self._database.open_connection()
         self._database._insert_values(self._database.oavals)
         self._database.get_row()
-        self.assertNotEqual(self._database.row[4],'blah')
+        self.assertEqual(self._database.row[4],self._book.sha)
+
 
     def testBookByLineHashMethod(self):
         """ Should return a SHA1 hash for a given list of strings
@@ -88,6 +97,12 @@ class BookTests(unittest.TestCase):
         self.assertEqual(
         self._book.sha,
         'dd5c938011a40a91c49ca9564f3aac40b67c8d27')
+
+
+    #def testBookGetDB(self):
+    #    """ Should return expected DB values
+    #    """
+
 
 
 if __name__ == "__main__":
