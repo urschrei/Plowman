@@ -128,32 +128,33 @@ on position (digest ASC)'
         # try to select the correct row, based on the SHA1 digest
         self.row = self.cursor.fetchone()
         if self.row == None:
-            with self.connection:
-                # no rows were returned, insert default values + new digest
-                logging.info(
+            # no rows were returned, insert default values + new digest
+            logging.info(
 "New file found, inserting row.\nSHA1: %s", str(self.book_digest)
-                    )
-                try:
-                    oavals = self._create_oauth()
-                except sqlite3.OperationalError:
-                    logging.critical(
-                    "Couldn't insert new row into table. Exiting")
-                    # close the SQLite connection, and quit
-                    raise
-                self._insert_values(oavals)
-                self.row = self.cursor.fetchone()
+                )
+            try:
+                oavals = self._create_oauth()
+            except sqlite3.OperationalError:
+                logging.critical(
+                "Couldn't insert new row into table. Exiting")
+                # close the SQLite connection, and quit
+                raise
+            self._insert_values(oavals)
+            self.row = self.cursor.fetchone()
+
 
     def _insert_values(self, oavals):
         """ Insert OAuth keys and file digest into newly-created db
         """
-        self.cursor.execute \
-        ('INSERT INTO position VALUES \
-        (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
-        oavals["conkey"], oavals["consecret"],
-        oavals["acckey"], oavals["accsecret"]))
-        self.cursor.execute(
-        'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
-        )
+        with self.connection:
+            self.cursor.execute \
+            ('INSERT INTO position VALUES \
+            (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
+            oavals["conkey"], oavals["consecret"],
+            oavals["acckey"], oavals["accsecret"]))
+            self.cursor.execute(
+            'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
+            )
 
 
     def _create_oauth(self):
