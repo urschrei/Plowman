@@ -15,6 +15,8 @@ class BookTests(unittest.TestCase):
     # create Book and DB instance
     @classmethod
     def setUpClass(cls):
+        """ instantiate book and db classes for all tests
+        """
         cls._book = bookbyline.BookFromTextFile('test_file.txt', 'This')
         cls._database = bookbyline.DBconn(cls._book.sha, ':memory:')
 
@@ -22,11 +24,15 @@ class BookTests(unittest.TestCase):
     # destroy Book and DB instance
     @classmethod
     def tearDownClass(cls):
+        """ clean up the classes when we've finished
+        """
         del cls._book
         del cls._database
 
 
     def setUp(self):
+        """ set up known good values to test with
+        """
         # provide known correct SHA1 hash of a list of strings
         self.knownValues = ((['a', 'b', 'c', 'd', 'e'],
         '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
@@ -43,6 +49,9 @@ class BookTests(unittest.TestCase):
 
 
     def tearDown(self):
+        """ empty the database table and remove old known values when each
+        test ends
+        """
         # ensure we have a clean position table prior to each test
         self._database.cursor.execute(
         'DELETE FROM position'
@@ -53,13 +62,13 @@ class BookTests(unittest.TestCase):
 
 
     def testDatabaseConnectionExists(self):
-        """ Should return a valid sqlite3 connection object
+        """ should return a valid sqlite3 connection object
         """
         self.assertTrue(type(self._database.connection), 'sqlite3.Connection')
 
 
     def testInsertValuesIntoDatabase(self):
-        """ Should be able to insert rows into the db, and retrieve them
+        """ should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
         self._database._insert_values(self._database.oavals)
@@ -68,7 +77,7 @@ class BookTests(unittest.TestCase):
 
 
     def testFormatTweet(self):
-        """ Will pass if the output var begins with 'This',
+        """ will pass if the output var begins with 'This',
         which is the first word of the first line in the test text file,
         and contains the first two words of the second line
         """
@@ -80,7 +89,7 @@ class BookTests(unittest.TestCase):
 
 
     def testCreateDatabaseConnectionFromBook(self):
-        """ Test that values are returned from db to book object
+        """ ensure that values are returned from db to book object
         """
         self._database._insert_values(self._database.oavals)
         self._book.get_db(self._database)
@@ -89,7 +98,7 @@ class BookTests(unittest.TestCase):
 
 
     def testBookByLineHashMethod(self):
-        """ Should return a SHA1 hash for a given list of strings
+        """ should return a SHA1 hash for a given list of strings
         """
         for string, sha_hash in self.knownValues:
             result = bookbyline.get_hash(string)
@@ -97,14 +106,14 @@ class BookTests(unittest.TestCase):
 
 
     def testBookByLineImpFile(self):
-        """ Should return a tuple
+        """ should return a tuple
         """
         result = bookbyline.imp_file(self.lines)
         self.assertTrue(type(result) == tuple)
 
 
     def testBookByLineTupleContents(self):
-        """ Tuple should contain no blank lines
+        """ tuple should contain no blank lines
         """
         result = bookbyline.imp_file(self.lines)
         for r in result:
@@ -112,13 +121,13 @@ class BookTests(unittest.TestCase):
 
 
     def testBookFileHashIncorrect(self):
-        """ Should fail, because the SHA property should be valid
+        """ should fail, because the SHA property should be valid
         """
         self.assertNotEqual(self._book.sha, 'abc')
 
 
     def testBookFileHashCorrect(self):
-        """ Class property should be equal to known correct SHA value
+        """ class property should be equal to known correct SHA value
             of test_file.txt
         """
         self.assertEqual(
