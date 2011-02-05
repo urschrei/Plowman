@@ -64,6 +64,18 @@ class BookTests(unittest.TestCase):
         self.assertEqual(self._database.row[4], self._book.sha)
 
 
+    def testFormatTweet(self):
+        """ Will pass if the output var begins with 'This',
+        which is the first word of the first line in the test text file,
+        and contains the first two words of the second line
+        """
+        self._database._insert_values(self._database.oavals)
+        self._book.get_db(self._database)
+        output = self._book.format_tweet()
+        self.assertTrue(output.startswith('This'))
+        self.assertTrue(output.find('It has') > -1)
+
+
     def testCreateDatabaseConnectionFromBook(self):
         """ Test that values are returned from db to book object
         """
