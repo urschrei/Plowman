@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 # coding=utf-8
+"""
+Tests for the bookbyline module
+"""
 
 import unittest
 import sys
