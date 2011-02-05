@@ -14,7 +14,7 @@ class BookTests(unittest.TestCase):
 
 
     def setUp(self):
-        """ set up known good values to test with
+        """ set up known good values with which to test
         """
         self.book = bookbyline.BookFromTextFile('test_file.txt', 'This')
         self.database = bookbyline.DBconn(self.book.sha, ':memory:')
