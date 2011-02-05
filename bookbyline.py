@@ -338,17 +338,17 @@ def open_file(to_read):
         called, so we need this to give us a file object, which is then
         passed to imp_file()
     """
-    with open(to_read, 'r') as got_a_file:
-        return imp_file(got_a_file)
-
+    try:
+        with open(to_read, 'r') as got_a_file:
+            return imp_file(got_a_file)
+    except IOError:
+        logging.critical("Couldn't read from file %s. exiting", to_read)
+        raise
 
 def imp_file(list_from_file):
     """ Try to import a text file, strip its blank lines, and return a tuple
     """
-    try:
-        return tuple(line for line in list_from_file if line.strip())
-    except IOError:
-        logging.critical("Couldn't read from file %s. exiting", list_from_file)
+    return tuple(line for line in list_from_file if line.strip())
 
 
 def gimme_lines(fname, not_file, is_file):
