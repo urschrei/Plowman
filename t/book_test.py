@@ -66,7 +66,6 @@ class BookTests(unittest.TestCase):
         """
         self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
-        print self.book.lines
         output = self.book.format_tweet()
         self.assertTrue(output.startswith('This'))
         self.assertTrue(output.find('It has') > -1)
@@ -83,12 +82,27 @@ class BookTests(unittest.TestCase):
         self.assertEqual(self.book.position['lastline'], 2)
 
 
+    def testEmitNormalTweet(self):
+        """ should pass if the lastline dict entry is 3
+            which means that the first two lines of the file have been tweeted
+            and no header is matched when we call emit_tweet
+        """
+        self.live = False
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        self.book.position['lastline'] = 2
+        new_headers = ['foo', 'bar']
+        self.book.headers = new_headers
+        self.book.emit_tweet(self.live)
+        self.assertEqual(self.book.position['lastline'], 3)
+
+
     def testEmitWrongHeader(self):
         """ should fail, because the headers don't match the text file
         """
+        self.live = False
         self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
-        self.live = False
         new_headers = ['foo', 'bar']
         self.book.headers = new_headers
         with self.assertRaises(bookbyline.MatchError):
