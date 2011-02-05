@@ -140,11 +140,39 @@ class BookTests(unittest.TestCase):
             self.assertEqual(sha_hash, result)
 
 
-    def testBookByLineImpFile(self):
-        """ should return a tuple
+    def testGimmeLinesFromFile(self):
+        """ test that gimme_lines works on closed files
         """
-        result = bookbyline.imp_file(self.lines)
-        self.assertTrue(type(result) == tuple)
+        lines = bookbyline.gimme_lines(
+        'test_file.txt',
+        bookbyline.open_file,
+        bookbyline.imp_file
+        )
+        self.assertTrue(type(lines) == tuple)
+
+
+    def testGimmeLinesFromFileObject(self):
+        """ test that gimme_lines works on opened file objects
+        """
+        self.f = open('test_file.txt', 'r')
+        lines = bookbyline.gimme_lines(
+        self.f,
+        bookbyline.open_file,
+        bookbyline.imp_file
+        )
+        self.assertTrue(type(lines) == tuple)
+
+
+    def testGimmeLinesFromFileFailure(self):
+        """ gimme_lines should raise an error if it tries to open
+            a nonexistent file
+        """
+        with self.assertRaises(IOError):
+            lines = bookbyline.gimme_lines(
+            'not_a_file.txt',
+            bookbyline.open_file,
+            bookbyline.imp_file
+            )
 
 
     def testBookByLineTupleContents(self):
