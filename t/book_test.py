@@ -88,6 +88,20 @@ class BookTests(unittest.TestCase):
         self.assertTrue(output.find('It has') > -1)
 
 
+    def testWriteValuesToDatabase(self):
+        """ will pass if we successfully write updated values to the db
+        """
+        self._database._insert_values(self._database.oavals)
+        self._database.write_vals(33, 45, 'New Header')
+        self._database.cursor.execute(
+        'SELECT * FROM position'
+        )
+        r = self._database.cursor.fetchone()
+        self.assertEqual(r[1],33)
+        self.assertEqual(r[2],45)
+        self.assertEqual(r[3],'New Header')
+
+
     def testCreateDatabaseConnectionFromBook(self):
         """ ensure that values are returned from db to book object
         """
