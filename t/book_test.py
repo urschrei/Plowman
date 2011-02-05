@@ -12,27 +12,12 @@ import bookbyline
 
 class BookTests(unittest.TestCase):
 
-    # create Book and DB instance
-    @classmethod
-    def setUpClass(cls):
-        """ instantiate book and db classes for all tests
-        """
-        cls._book = bookbyline.BookFromTextFile('test_file.txt', 'This')
-        cls._database = bookbyline.DBconn(cls._book.sha, ':memory:')
-
-
-    # destroy Book and DB instance
-    @classmethod
-    def tearDownClass(cls):
-        """ clean up the classes when we've finished
-        """
-        del cls._book
-        del cls._database
-
 
     def setUp(self):
         """ set up known good values to test with
         """
+        self.book = bookbyline.BookFromTextFile('test_file.txt', 'This')
+        self.database = bookbyline.DBconn(self.book.sha, ':memory:')
         # provide known correct SHA1 hash of a list of strings
         self.knownValues = ((['a', 'b', 'c', 'd', 'e'],
         '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
@@ -41,11 +26,11 @@ class BookTests(unittest.TestCase):
         with open('test_file.txt', 'r') as f:
             self.lines = f.readlines()
         # made-up OAauth values
-        self._database.oavals = {}
-        self._database.oavals['conkey'] = 'A'
-        self._database.oavals['consecret'] = 'B'
-        self._database.oavals['acckey'] = 'C'
-        self._database.oavals['accsecret'] = 'D'
+        self.database.oavals = {}
+        self.database.oavals['conkey'] = 'A'
+        self.database.oavals['consecret'] = 'B'
+        self.database.oavals['acckey'] = 'C'
+        self.database.oavals['accsecret'] = 'D'
 
 
     def tearDown(self):
@@ -53,10 +38,8 @@ class BookTests(unittest.TestCase):
         test ends
         """
         # ensure we have a clean position table prior to each test
-        self._database.cursor.execute(
-        'DELETE FROM position'
-        )
-        self._database.connection.commit()
+        del self.book
+        del self.database
         del self.knownValues
         del self.lines
 
@@ -64,16 +47,16 @@ class BookTests(unittest.TestCase):
     def testDatabaseConnectionExists(self):
         """ should return a valid sqlite3 connection object
         """
-        self.assertTrue(type(self._database.connection), 'sqlite3.Connection')
+        self.assertTrue(type(self.database.connection), 'sqlite3.Connection')
 
 
     def testInsertValuesIntoDatabase(self):
         """ should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
-        self._database._insert_values(self._database.oavals)
-        self._database.get_row()
-        self.assertEqual(self._database.row[4], self._book.sha)
+        self.database._insert_values(self.database.oavals)
+        self.database.get_row()
+        self.assertEqual(self.database.row[4], self.book.sha)
 
 
     def testFormatTweet(self):
@@ -81,22 +64,35 @@ class BookTests(unittest.TestCase):
         which is the first word of the first line in the test text file,
         and contains the first two words of the second line
         """
-        self._database._insert_values(self._database.oavals)
-        self._book.get_db(self._database)
-        output = self._book.format_tweet()
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        print self.book.lines
+        output = self.book.format_tweet()
         self.assertTrue(output.startswith('This'))
         self.assertTrue(output.find('It has') > -1)
+
+
+    def testEmitHeaderTweet(self):
+        """ Should pass if the lastline dict entry is 2
+            which means that the first two lines of the file have been tweeted
+        """
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        print self.book.lines
+        self.live = False
+        self.book.emit_tweet(self.live)
+        self.assertEqual(self.book.position['lastline'], 2)
 
 
     def testWriteValuesToDatabase(self):
         """ will pass if we successfully write updated values to the db
         """
-        self._database._insert_values(self._database.oavals)
-        self._database.write_vals(33, 45, 'New Header')
-        self._database.cursor.execute(
+        self.database._insert_values(self.database.oavals)
+        self.database.write_vals(33, 45, 'New Header')
+        self.database.cursor.execute(
         'SELECT * FROM position'
         )
-        r = self._database.cursor.fetchone()
+        r = self.database.cursor.fetchone()
         self.assertEqual(r[1],33)
         self.assertEqual(r[2],45)
         self.assertEqual(r[3],'New Header')
@@ -105,10 +101,10 @@ class BookTests(unittest.TestCase):
     def testCreateDatabaseConnectionFromBook(self):
         """ ensure that values are returned from db to book object
         """
-        self._database._insert_values(self._database.oavals)
-        self._book.get_db(self._database)
-        self.assertEqual(self._book.oavals['conkey'], 'A')
-        self.assertTrue(type(self._book.lines), 'itertools.islice object')
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        self.assertEqual(self.book.oavals['conkey'], 'A')
+        self.assertTrue(type(self.book.lines), 'itertools.islice object')
 
 
     def testBookByLineHashMethod(self):
@@ -137,7 +133,7 @@ class BookTests(unittest.TestCase):
     def testBookFileHashIncorrect(self):
         """ should fail, because the SHA property should be valid
         """
-        self.assertNotEqual(self._book.sha, 'abc')
+        self.assertNotEqual(self.book.sha, 'abc')
 
 
     def testBookFileHashCorrect(self):
@@ -145,7 +141,7 @@ class BookTests(unittest.TestCase):
             of test_file.txt
         """
         self.assertEqual(
-        self._book.sha,
+        self.book.sha,
         'dd5c938011a40a91c49ca9564f3aac40b67c8d27')
 
 
