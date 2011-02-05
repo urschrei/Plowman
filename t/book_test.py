@@ -31,11 +31,6 @@ class BookTests(unittest.TestCase):
         # read lines from a test text file
         with open('test_file.txt', 'r') as f:
             self.lines = f.readlines()
-        # ensure we have a clean position table prior to each test
-        self._database.cursor.execute(
-        'DELETE FROM position WHERE id < 100'
-        )
-        self._database.connection.commit()
         # made-up OAauth values
         self._database.oavals = {}
         self._database.oavals['conkey'] = 'A'
@@ -45,18 +40,23 @@ class BookTests(unittest.TestCase):
 
 
     def tearDown(self):
+        # ensure we have a clean position table prior to each test
+        self._database.cursor.execute(
+        'DELETE FROM position'
+        )
+        self._database.connection.commit()
         del self.knownValues
         del self.lines
 
 
-    def testCreateDB(self):
-        """ Should create a sqlite3 database in memory
+    def testDatabaseConnectionExists(self):
+        """ Should return a valid sqlite3 connection object
         """
         self.assertTrue(type(self._database.connection), 'sqlite3.Connection')
 
 
-    def testInsertValuesIntoDB(self):
-        """ Should be able to insert rows into the db
+    def testInsertValuesIntoDatabase(self):
+        """ Should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
         self._database._insert_values(self._database.oavals)
@@ -103,17 +103,12 @@ class BookTests(unittest.TestCase):
 
 
     def testBookFileHashCorrect(self):
-        """ Class property should be equal to known correct value
+        """ Class property should be equal to known correct SHA value
+            of test_file.txt
         """
         self.assertEqual(
         self._book.sha,
         'dd5c938011a40a91c49ca9564f3aac40b67c8d27')
-
-
-    #def testBookGetDB(self):
-    #    """ Should return expected DB values
-    #    """
-
 
 
 if __name__ == "__main__":
