@@ -73,15 +73,26 @@ class BookTests(unittest.TestCase):
 
 
     def testEmitHeaderTweet(self):
-        """ Should pass if the lastline dict entry is 2
+        """ should pass if the lastline dict entry is 2
             which means that the first two lines of the file have been tweeted
         """
         self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
-        print self.book.lines
         self.live = False
         self.book.emit_tweet(self.live)
         self.assertEqual(self.book.position['lastline'], 2)
+
+
+    def testEmitWrongHeader(self):
+        """ should fail, because the headers don't match the text file
+        """
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        self.live = False
+        new_headers = ['foo', 'bar']
+        self.book.headers = new_headers
+        with self.assertRaises(bookbyline.MatchError):
+            self.book.emit_tweet(self.live)
 
 
     def testWriteValuesToDatabase(self):
