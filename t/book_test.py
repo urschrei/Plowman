@@ -31,17 +31,20 @@ class BookTests(unittest.TestCase):
         self.database.oavals['consecret'] = 'B'
         self.database.oavals['acckey'] = 'C'
         self.database.oavals['accsecret'] = 'D'
+        self.database._insert_values(self.database.oavals)
+        self.live = False
 
 
     def tearDown(self):
         """ Empty the database table and remove old known values when each
         test ends
         """
-        # ensure we have a clean position table prior to each test
+        # ensure we remove all objects and properties after each test
         del self.book
         del self.database
         del self.knownValues
         del self.lines
+        del self.live
 
 
     def testDatabaseConnectionExists(self):
@@ -54,7 +57,6 @@ class BookTests(unittest.TestCase):
         """ Should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
-        self.database._insert_values(self.database.oavals)
         self.database.get_row()
         self.assertEqual(self.database.row[4], self.book.sha)
 
@@ -64,7 +66,6 @@ class BookTests(unittest.TestCase):
         which is the first word of the first line in the test text file,
         and contains the first two words of the second line
         """
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
         output = self.book.format_tweet()
         self.assertTrue(output.startswith('This'))
@@ -75,9 +76,7 @@ class BookTests(unittest.TestCase):
         """ Should pass if the lastline dict entry is 2
             which means that the first two lines of the file have been tweeted
         """
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
-        self.live = False
         self.book.emit_tweet(self.live)
         self.assertEqual(self.book.position['lastline'], 2)
 
@@ -87,8 +86,6 @@ class BookTests(unittest.TestCase):
             which means that the first two lines of the file have been tweeted
             and no header is matched when we call emit_tweet
         """
-        self.live = False
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
         self.book.position['lastline'] = 2
         new_headers = ['foo', 'bar']
@@ -100,8 +97,6 @@ class BookTests(unittest.TestCase):
     def testEmitWrongHeader(self):
         """ Should fail, because the headers don't match the text file
         """
-        self.live = False
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
         new_headers = ['foo', 'bar']
         self.book.headers = new_headers
@@ -116,9 +111,7 @@ class BookTests(unittest.TestCase):
             the final line of the text file in 'lastline', then calling next()
             on the resulting slice
         """
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
-        self.live = False
         self.book.emit_tweet(self.live)
         with self.assertRaises(StopIteration):
             self.book.emit_tweet(self.live)
@@ -127,7 +120,6 @@ class BookTests(unittest.TestCase):
     def testWriteValuesToDatabase(self):
         """ Will pass if we successfully write updated values to the db
         """
-        self.database._insert_values(self.database.oavals)
         self.database.write_vals(33, 45, 'New Header')
         self.database.cursor.execute(
         'SELECT * FROM position'
@@ -141,7 +133,6 @@ class BookTests(unittest.TestCase):
     def testWriteValsToDatabaseFail(self):
         """ Will fail if the database is closed when we try to write to it
         """
-        self.database._insert_values(self.database.oavals)
         self.database.connection.close()
         with self.assertRaises(bookbyline.sqlite3.ProgrammingError):
             self.database.write_vals(33, 45, 'New Header')
@@ -150,7 +141,6 @@ class BookTests(unittest.TestCase):
     def testCreateDatabaseConnectionFromBook(self):
         """ Ensure that values are returned from db to book object
         """
-        self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
         self.assertEqual(self.book.oavals['conkey'], 'A')
         self.assertTrue(type(self.book.lines), 'itertools.islice object')
