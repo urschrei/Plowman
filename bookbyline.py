@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # coding=utf-8
-""" 
+"""
 Tweets lines of poetry from a text file.
 
 This module reads a text file from disk, and tweets properly-
@@ -9,8 +9,8 @@ whether it's a header line, or body text.  The line position is stored in
 a sqlite3 database, which will be created in the current working directory.
 The module takes a number of arguments:
 - the file name (including path)
-- words whose presence at the beginning of a line will cause it to be treated as
-a header
+- words whose presence at the beginning of a line will cause it to be treated
+as a header
 - a "live" switch, which will cause the line to be tweeted
 - a "verbose" switch, which will cause a full stack trace to be printed if an
 error occurs.
@@ -53,7 +53,7 @@ default = False, dest = "live")
 parser.add_argument(
 "-file", metavar = "filename",
 help = "the full path to a text file", required = True,
-type = argparse.FileType("r",0))
+type = argparse.FileType("r", 0))
 parser.add_argument(
 "-header", metavar = "header-line word to match",
 help = "a case-sensitive list of words (and punctuation) which will be \
@@ -66,19 +66,21 @@ action = "store_true", default = False, dest = "errs")
 
 
 class MatchError(Exception):
-    """ Basic error which is raised if no header line is matched on initial run.
+    """ Basic error which raised if no header line is matched on initial run.
     """
+
     def __init__(self, detail):
         Exception.__init__(self)
         self.error = detail
+
     def __str__(self):
         return repr(self.error)
-
 
 
 class DBconn(object):
     """ Create a SQLite connection, or create a new db and table
     """
+
     def __init__(self, digest = None, loc = 'tweet_books.sl3'):
         # create a tuple for db insertion
         # NB do not use this value if you're explicitly specifying tuples
@@ -93,7 +95,6 @@ acckey TEXT, accsecret TEXT)'
         self.cursor = None
         self.row = None
         self.open_connection()
-
 
     def open_connection(self):
         """ Open a db connection, or create a new db
@@ -121,7 +122,6 @@ on position (digest ASC)'
                 self.cursor.execute(self.schema)
                 self.cursor.execute(idx)
 
-
     def get_row(self):
         """ Select a row based on the input file SHA1 hash, or create a new
         entry, and new OAuth credentials
@@ -143,7 +143,6 @@ on position (digest ASC)'
             self._insert_values(oavals)
             self.row = self.cursor.fetchone()
 
-
     def _insert_values(self, oavals):
         """ Insert OAuth keys and file digest into newly-created db
         """
@@ -157,7 +156,6 @@ on position (digest ASC)'
             self.cursor.execute(
             'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
             )
-
 
     def _create_oauth(self):
         """ Obtain OAuth creds from Twitter, using the Tweepy lib
@@ -183,7 +181,6 @@ Error was: %s" % (self.book_digest, err)
             raise
         return oav
 
-
     def write_vals(self, last_l, disp_l, prefix):
         """ Write new line and header values to the db
         """
@@ -202,7 +199,6 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?',
                 raise
 
 
-
 class BookFromTextFile(object):
     """ Create a book object from a text file.
 
@@ -214,6 +210,7 @@ class BookFromTextFile(object):
     passed.  If no db is found, a new db, table, row and OAuth credentials
     are created.
     """
+
     def __init__(self, fname = None, hid = None):
         self.headers = hid
         self.database = None
@@ -223,10 +220,10 @@ class BookFromTextFile(object):
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
 
-
     def get_db(self, created_connection):
         """ Open/create a db, and retrieve/insert a row based on SHA1 hash
         """
+
         # try to open a db connection
         self.database = created_connection
         self.database.get_row()
@@ -250,7 +247,6 @@ class BookFromTextFile(object):
         self.database.row[1] + 2,
         None
         )
-
 
     def format_tweet(self):
         """ Properly format an input string depending on whether it's a header
@@ -306,14 +302,13 @@ printing anything.")
             cur_line.strip())
             return output_line
 
-
     def emit_tweet(self, live_tweet):
         """ Outputs string as a tweet or as message to stdout.
 
         Calls the format_tweet() function, which correctly formats
         the current object's line[] members, depending
-        on what they are, writes the updated file position, line display number,
-        and header values to the db. then tweets the resulting string.
+        on what they are, writes the updated file position, line display
+        number, and header values to the db. then tweets the resulting string.
         """
         payload = self.format_tweet()
         auth = tweepy.OAuthHandler(self.oavals["conkey"],
@@ -348,6 +343,7 @@ def open_file(to_read):
     except IOError:
         logging.critical("Couldn't read from file %s. exiting", to_read)
         raise
+
 
 def imp_file(list_from_file):
     """ Try to import a text file, strip its blank lines, and return a tuple

@@ -10,8 +10,8 @@ sys.path.insert(0, '..')
 
 import bookbyline
 
-class BookTests(unittest.TestCase):
 
+class BookTests(unittest.TestCase):
 
     def setUp(self):
         """ Set up known good values with which to test
@@ -34,7 +34,6 @@ class BookTests(unittest.TestCase):
         self.database._insert_values(self.database.oavals)
         self.live = False
 
-
     def tearDown(self):
         """ Empty the database table and remove old known values when each
         test ends
@@ -46,12 +45,10 @@ class BookTests(unittest.TestCase):
         del self.lines
         del self.live
 
-
     def testDatabaseConnectionExists(self):
         """ Should return a valid sqlite3 connection object
         """
         self.assertTrue(type(self.database.connection), 'sqlite3.Connection')
-
 
     def testInsertValuesIntoDatabase(self):
         """ Should be able to insert rows into the db, and retrieve them
@@ -59,7 +56,6 @@ class BookTests(unittest.TestCase):
         """
         self.database.get_row()
         self.assertEqual(self.database.row[4], self.book.sha)
-
 
     def testFormatTweet(self):
         """ Will pass if the output var begins with 'This',
@@ -71,7 +67,6 @@ class BookTests(unittest.TestCase):
         self.assertTrue(output.startswith('This'))
         self.assertTrue(output.find('It has') > -1)
 
-
     def testEmitHeaderTweet(self):
         """ Should pass if the lastline dict entry is 2
             which means that the first two lines of the file have been tweeted
@@ -79,7 +74,6 @@ class BookTests(unittest.TestCase):
         self.book.get_db(self.database)
         self.book.emit_tweet(self.live)
         self.assertEqual(self.book.position['lastline'], 2)
-
 
     def testEmitNormalTweet(self):
         """ Should pass if the lastline dict entry is 3
@@ -93,7 +87,6 @@ class BookTests(unittest.TestCase):
         self.book.emit_tweet(self.live)
         self.assertEqual(self.book.position['lastline'], 3)
 
-
     def testEmitWrongHeader(self):
         """ Should fail, because the headers don't match the text file
         """
@@ -102,7 +95,6 @@ class BookTests(unittest.TestCase):
         self.book.headers = new_headers
         with self.assertRaises(bookbyline.MatchError):
             self.book.emit_tweet(self.live)
-
 
     def testReachedEndOfFile(self):
         """ Should fail because we've reached the end of the file.
@@ -116,7 +108,6 @@ class BookTests(unittest.TestCase):
         with self.assertRaises(StopIteration):
             self.book.emit_tweet(self.live)
 
-
     def testWriteValuesToDatabase(self):
         """ Will pass if we successfully write updated values to the db
         """
@@ -129,14 +120,12 @@ class BookTests(unittest.TestCase):
         self.assertEqual(r[2],45)
         self.assertEqual(r[3],'New Header')
 
-
     def testWriteValsToDatabaseFail(self):
         """ Will fail if the database is closed when we try to write to it
         """
         self.database.connection.close()
         with self.assertRaises(bookbyline.sqlite3.ProgrammingError):
             self.database.write_vals(33, 45, 'New Header')
-
 
     def testCreateDatabaseConnectionFromBook(self):
         """ Ensure that values are returned from db to book object
@@ -145,14 +134,12 @@ class BookTests(unittest.TestCase):
         self.assertEqual(self.book.oavals['conkey'], 'A')
         self.assertTrue(type(self.book.lines), 'itertools.islice object')
 
-
     def testBookByLineHashMethod(self):
         """ Should return a SHA1 hash for a given list of strings
         """
         for string, sha_hash in self.knownValues:
             result = bookbyline.get_hash(string)
             self.assertEqual(sha_hash, result)
-
 
     def testGimmeLinesFromFile(self):
         """ Test that gimme_lines works on closed files
@@ -163,7 +150,6 @@ class BookTests(unittest.TestCase):
         bookbyline.imp_file
         )
         self.assertTrue(type(lines) == tuple)
-
 
     def testGimmeLinesFromFileObject(self):
         """ Test that gimme_lines works on opened file objects
@@ -176,7 +162,6 @@ class BookTests(unittest.TestCase):
         )
         self.assertTrue(type(lines) == tuple)
 
-
     def testGimmeLinesFromFileFailure(self):
         """ Gimme_lines should raise an error if it tries to open
             a nonexistent file
@@ -188,7 +173,6 @@ class BookTests(unittest.TestCase):
             bookbyline.imp_file
             )
 
-
     def testBookByLineTupleContents(self):
         """ Tuple should contain no blank lines
         """
@@ -196,12 +180,10 @@ class BookTests(unittest.TestCase):
         for r in result:
             self.assertTrue(r != '\n')
 
-
     def testBookFileHashIncorrect(self):
         """ Should fail, because the SHA property should be valid
         """
         self.assertNotEqual(self.book.sha, 'abc')
-
 
     def testBookFileHashCorrect(self):
         """ Class property should be equal to known correct SHA value
@@ -210,7 +192,6 @@ class BookTests(unittest.TestCase):
         self.assertEqual(
         self.book.sha,
         'dd5c938011a40a91c49ca9564f3aac40b67c8d27')
-
 
 if __name__ == "__main__":
     unittest.main()
