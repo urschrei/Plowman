@@ -193,7 +193,11 @@ Error was: %s" % (self.book_digest, err)
                 'UPDATE position SET position = ?,\
 displayline = ?, header = ?, digest = ? WHERE digest = ?',
                 (last_l, disp_l, prefix, self.book_digest, self.book_digest))
-            except (sqlite3.OperationalError, IndexError):
+            except (
+            sqlite3.OperationalError,
+            sqlite3.ProgrammingError,
+            IndexError
+            ):
                 logging.error("%s Couldn't update the db", (str(sys.argv[0])))
                 raise
 
