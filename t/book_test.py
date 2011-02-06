@@ -14,7 +14,7 @@ class BookTests(unittest.TestCase):
 
 
     def setUp(self):
-        """ set up known good values with which to test
+        """ Set up known good values with which to test
         """
         self.book = bookbyline.BookFromTextFile('test_file.txt', 'This')
         self.database = bookbyline.DBconn(self.book.sha, ':memory:')
@@ -34,7 +34,7 @@ class BookTests(unittest.TestCase):
 
 
     def tearDown(self):
-        """ empty the database table and remove old known values when each
+        """ Empty the database table and remove old known values when each
         test ends
         """
         # ensure we have a clean position table prior to each test
@@ -45,13 +45,13 @@ class BookTests(unittest.TestCase):
 
 
     def testDatabaseConnectionExists(self):
-        """ should return a valid sqlite3 connection object
+        """ Should return a valid sqlite3 connection object
         """
         self.assertTrue(type(self.database.connection), 'sqlite3.Connection')
 
 
     def testInsertValuesIntoDatabase(self):
-        """ should be able to insert rows into the db, and retrieve them
+        """ Should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
         self.database._insert_values(self.database.oavals)
@@ -60,7 +60,7 @@ class BookTests(unittest.TestCase):
 
 
     def testFormatTweet(self):
-        """ will pass if the output var begins with 'This',
+        """ Will pass if the output var begins with 'This',
         which is the first word of the first line in the test text file,
         and contains the first two words of the second line
         """
@@ -72,7 +72,7 @@ class BookTests(unittest.TestCase):
 
 
     def testEmitHeaderTweet(self):
-        """ should pass if the lastline dict entry is 2
+        """ Should pass if the lastline dict entry is 2
             which means that the first two lines of the file have been tweeted
         """
         self.database._insert_values(self.database.oavals)
@@ -83,7 +83,7 @@ class BookTests(unittest.TestCase):
 
 
     def testEmitNormalTweet(self):
-        """ should pass if the lastline dict entry is 3
+        """ Should pass if the lastline dict entry is 3
             which means that the first two lines of the file have been tweeted
             and no header is matched when we call emit_tweet
         """
@@ -98,7 +98,7 @@ class BookTests(unittest.TestCase):
 
 
     def testEmitWrongHeader(self):
-        """ should fail, because the headers don't match the text file
+        """ Should fail, because the headers don't match the text file
         """
         self.live = False
         self.database._insert_values(self.database.oavals)
@@ -109,8 +109,23 @@ class BookTests(unittest.TestCase):
             self.book.emit_tweet(self.live)
 
 
+    def testReachedEndOfFile(self):
+        """ Should fail because we've reached the end of the file.
+            We're faking this test by emitting a tweet, which iterates to the
+            end of the islice object. This is functionally identical to storing
+            the final line of the text file in 'lastline', then calling next()
+            on the resulting slice
+        """
+        self.database._insert_values(self.database.oavals)
+        self.book.get_db(self.database)
+        self.live = False
+        self.book.emit_tweet(self.live)
+        with self.assertRaises(StopIteration):
+            self.book.emit_tweet(self.live)
+
+
     def testWriteValuesToDatabase(self):
-        """ will pass if we successfully write updated values to the db
+        """ Will pass if we successfully write updated values to the db
         """
         self.database._insert_values(self.database.oavals)
         self.database.write_vals(33, 45, 'New Header')
@@ -124,7 +139,7 @@ class BookTests(unittest.TestCase):
 
 
     def testWriteValsToDatabaseFail(self):
-        """ will fail if the database is closed when we try to write to it
+        """ Will fail if the database is closed when we try to write to it
         """
         self.database._insert_values(self.database.oavals)
         self.database.connection.close()
@@ -132,9 +147,8 @@ class BookTests(unittest.TestCase):
             self.database.write_vals(33, 45, 'New Header')
 
 
-
     def testCreateDatabaseConnectionFromBook(self):
-        """ ensure that values are returned from db to book object
+        """ Ensure that values are returned from db to book object
         """
         self.database._insert_values(self.database.oavals)
         self.book.get_db(self.database)
@@ -143,7 +157,7 @@ class BookTests(unittest.TestCase):
 
 
     def testBookByLineHashMethod(self):
-        """ should return a SHA1 hash for a given list of strings
+        """ Should return a SHA1 hash for a given list of strings
         """
         for string, sha_hash in self.knownValues:
             result = bookbyline.get_hash(string)
@@ -151,7 +165,7 @@ class BookTests(unittest.TestCase):
 
 
     def testGimmeLinesFromFile(self):
-        """ test that gimme_lines works on closed files
+        """ Test that gimme_lines works on closed files
         """
         lines = bookbyline.gimme_lines(
         'test_file.txt',
@@ -162,7 +176,7 @@ class BookTests(unittest.TestCase):
 
 
     def testGimmeLinesFromFileObject(self):
-        """ test that gimme_lines works on opened file objects
+        """ Test that gimme_lines works on opened file objects
         """
         self.f = open('test_file.txt', 'r')
         lines = bookbyline.gimme_lines(
@@ -174,7 +188,7 @@ class BookTests(unittest.TestCase):
 
 
     def testGimmeLinesFromFileFailure(self):
-        """ gimme_lines should raise an error if it tries to open
+        """ Gimme_lines should raise an error if it tries to open
             a nonexistent file
         """
         with self.assertRaises(IOError):
@@ -186,7 +200,7 @@ class BookTests(unittest.TestCase):
 
 
     def testBookByLineTupleContents(self):
-        """ tuple should contain no blank lines
+        """ Tuple should contain no blank lines
         """
         result = bookbyline.imp_file(self.lines)
         for r in result:
@@ -194,13 +208,13 @@ class BookTests(unittest.TestCase):
 
 
     def testBookFileHashIncorrect(self):
-        """ should fail, because the SHA property should be valid
+        """ Should fail, because the SHA property should be valid
         """
         self.assertNotEqual(self.book.sha, 'abc')
 
 
     def testBookFileHashCorrect(self):
-        """ class property should be equal to known correct SHA value
+        """ Class property should be equal to known correct SHA value
             of test_file.txt
         """
         self.assertEqual(
