@@ -372,7 +372,13 @@ def get_hash(sha_dig):
 def main():
     """ Main function.
     """
-    fromcl = parser.parse_args()
+    try:
+        fromcl = parser.parse_args()
+    except IOError, err:
+        print "Can't open the file you specified:"
+        print err
+        logging.critical(err)
+        raise
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
     input_book.get_db(DBconn(input_book.sha))
     input_book.emit_tweet(fromcl.live)
