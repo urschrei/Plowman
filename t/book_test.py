@@ -123,6 +123,16 @@ class BookTests(unittest.TestCase):
         self.assertEqual(r[3],'New Header')
 
 
+    def testWriteValsToDatabaseFail(self):
+        """ will fail if the database is closed when we try to write to it
+        """
+        self.database._insert_values(self.database.oavals)
+        self.database.connection.close()
+        with self.assertRaises(bookbyline.sqlite3.ProgrammingError):
+            self.database.write_vals(33, 45, 'New Header')
+
+
+
     def testCreateDatabaseConnectionFromBook(self):
         """ ensure that values are returned from db to book object
         """
