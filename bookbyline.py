@@ -44,27 +44,6 @@ filename='/var/log/twitter_books.log',
 filemode='a')
 
 
-# define command-line arguments
-parser = argparse.ArgumentParser(
-description='Tweet lines of poetry from a text file')
-parser.add_argument("-l", help = "live switch: will tweet the line. \
-Otherwise, it will be printed to stdout", action = "store_true",
-default = False, dest = "live")
-parser.add_argument(
-"-file", metavar = "filename",
-help = "the full path to a text file", required = True,
-type = argparse.FileType("r", 0))
-parser.add_argument(
-"-header", metavar = "header-line word to match",
-help = "a case-sensitive list of words (and punctuation) which will be \
-treated as header lines. Enter as many as you wish, separated by a \
-space. Example - Purgatory: BOOK Passus", nargs = "+",
-required = True)
-parser.add_argument(
-"-v", help = "Print stack trace to stdout",
-action = "store_true", default = False, dest = "errs")
-
-
 class MatchError(Exception):
     """ Basic error which raised if no header line is matched on initial run.
     """
@@ -370,8 +349,29 @@ def get_hash(sha_dig):
 
 
 def main():
-    """ Main function.
+    """ Main function, called from command line
     """
+    # define command-line arguments
+    parser = argparse.ArgumentParser(
+    description='Tweet lines of poetry from a text file')
+    parser.add_argument("-l", help = "live switch: will tweet the line. \
+    Otherwise, it will be printed to stdout", action = "store_true",
+    default = False, dest = "live")
+    parser.add_argument(
+    "-file", metavar = "filename",
+    help = "the full path to a text file", required = True,
+    type = argparse.FileType("r", 0))
+    parser.add_argument(
+    "-header", metavar = "header-line word to match",
+    help = "a case-sensitive list of words (and punctuation) which will be \
+    treated as header lines. Enter as many as you wish, separated by a \
+    space. Example - Purgatory: BOOK Passus", nargs = "+",
+    required = True)
+    parser.add_argument(
+    "-v", help = "Print stack trace to stdout",
+    action = "store_true", default = False, dest = "errs")
+
+
     try:
         fromcl = parser.parse_args()
     except IOError, err:
