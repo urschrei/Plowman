@@ -316,9 +316,10 @@ def open_file(to_read):
         called, so we need this to give us a file object, which is then
         passed to imp_file()
     """
+    import codecs
     try:
-        with open(to_read, 'r') as got_a_file:
-            return imp_file(got_a_file)
+        with codecs.open(to_read, mode = 'r', encoding = 'utf-8') as got_file:
+            return imp_file(got_file)
     except IOError:
         logging.critical("Couldn't read from file %s. exiting", to_read)
         raise
