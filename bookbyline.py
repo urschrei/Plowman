@@ -82,8 +82,7 @@ acckey TEXT, accsecret TEXT)'
             self.connection = sqlite3.connect(self.db_name)
         except IOError:
             logging.critical(
-            "Couldn't read from, or create a db. That's a show-stopper."
-            )
+            "Couldn't read from, or create a db. That's a show-stopper.")
             raise
         with self.connection:
             self.cursor = self.connection.cursor()
@@ -92,9 +91,7 @@ acckey TEXT, accsecret TEXT)'
                 'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
                 )
             except sqlite3.OperationalError:
-                logging.info(
-                "Couldn't find table \'position\'. Creating…"
-                )
+                logging.info("Couldn't find table \'position\'. Creating…")
                 # set up a new blank table and index
                 idx = 'CREATE UNIQUE INDEX \"digest_idx\" \
 on position (digest ASC)'
@@ -110,8 +107,7 @@ on position (digest ASC)'
         if self.row == None:
             # no rows were returned, insert default values + new digest
             logging.info(
-"New file found, inserting row.\nSHA1: %s", str(self.book_digest)
-                )
+"New file found, inserting row.\nSHA1: %s", str(self.book_digest))
             try:
                 oavals = self._create_oauth()
             except sqlite3.OperationalError:
@@ -133,8 +129,7 @@ on position (digest ASC)'
             oavals["acckey"], oavals["accsecret"]))
             self.connection.commit()
             self.cursor.execute(
-            'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
-            )
+            'SELECT * FROM position WHERE digest = ?', (self.book_digest,))
 
     def _create_oauth(self):
         """ Obtain OAuth creds from Twitter, using the Tweepy lib
@@ -153,8 +148,7 @@ on position (digest ASC)'
 Error was: %s" % (self.book_digest, err)
             logging.critical(
             "Couldn't complete OAuth setup for %s.\nError was: %s",\
-            self.book_digest, err
-            )
+            self.book_digest, err)
             # not much point in writing anything to the db in this case
             self.connection.rollback()
             raise
@@ -172,8 +166,7 @@ displayline = ?, header = ?, digest = ? WHERE digest = ?',
             except (
             sqlite3.OperationalError,
             sqlite3.ProgrammingError,
-            IndexError
-            ):
+            IndexError):
                 logging.error("%s Couldn't update the db", (str(sys.argv[0])))
                 raise
 
@@ -224,8 +217,7 @@ class BookFromTextFile(object):
         self.lines,
         self.database.row[1],
         self.database.row[1] + 2,
-        None
-        )
+        None)
 
     def format_tweet(self):
         """ Properly format an input string depending on whether it's a header
@@ -250,8 +242,7 @@ class BookFromTextFile(object):
             logging.info(
             "New header line found on line %s. Content: %s",
             self.position["lastline"] + 1,
-            cur_line
-            )
+            cur_line)
             self.position["displayline"] = 1
             # counter skips the next line, since we're tweeting it
             self.position["lastline"] += 2
@@ -305,8 +296,7 @@ printing anything.")
         self.database.write_vals(
             self.position["lastline"],
             self.position["displayline"],
-            self.position["prefix"]
-            )
+            self.position["prefix"])
 
 
 def open_file(to_read):
