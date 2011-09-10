@@ -44,7 +44,7 @@ for instructions. Be sure to choose "client", and "Read & Write access"
     token = autho.get_access_token(verifier=pin)
 
     # give user the access token
-    print "Access token:\n Key: %s\n Secret: %s" % (token.key, token.secret)
+    print "Access token:\nKey: %s\nSecret: %s" % (token.key, token.secret)
     creds["acckey"] = token.key
     creds["accsecret"] = token.secret
     return creds
@@ -55,8 +55,8 @@ def main():
     """
     oac = {}
     get_creds(oac)
-    print "Key values:\n    Consumer key: %s\n  Consumer secret: %s\n\
-    Access key: %s\n    Access secret: %s" % (oac["conkey"], oac["consecret"], \
+    print "Key values:\n Consumer key: %s\n Consumer secret: %s\n\
+ Access key: %s\n Access secret: %s" % (oac["conkey"], oac["consecret"], \
     oac["acckey"], oac["accsecret"])
 
 
