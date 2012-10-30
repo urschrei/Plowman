@@ -45,7 +45,7 @@ filemode='a')
 
 
 class MatchError(Exception):
-    """ Basic error which raised if no header line is matched on initial run.
+    """ Basic error which is raised if no header line is matched on initial run.
     """
 
     def __init__(self, detail):
