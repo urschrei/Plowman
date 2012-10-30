@@ -60,7 +60,7 @@ class DBconn(object):
     """ Create a SQLite connection, or create a new db and table
     """
 
-    def __init__(self, digest = None, loc = 'tweet_books.sl3'):
+    def __init__(self, digest=None, loc='tweet_books.sl3'):
         # create a tuple for db insertion
         # NB do not use this value if you're explicitly specifying tuples
         # see the insert statement, for instance
@@ -82,13 +82,14 @@ acckey TEXT, accsecret TEXT)'
             self.connection = sqlite3.connect(self.db_name)
         except IOError:
             logging.critical(
-            "Couldn't read from, or create a db. That's a show-stopper.")
+                "Couldn't read from, or create a db. That's a show-stopper.")
             raise
         with self.connection:
             self.cursor = self.connection.cursor()
             try:
                 self.cursor.execute(
-                'SELECT * FROM position WHERE digest = ?', (self.book_digest,)
+                    'SELECT * FROM position WHERE digest = ?',
+                    (self.book_digest,)
                 )
             except sqlite3.OperationalError:
                 logging.info("Couldn't find table \'position\'. Creating…")
@@ -179,7 +180,7 @@ class BookFromTextFile(object):
     2. a list object used to identify header lines
     A sqlite3 connection object is created, and an attempt is made to
     retrieve a row from a db matching the filename which was
-    passed.  If no db is found, a new db, table, row and OAuth credentials
+    passed. If no db is found, a new db, table, row and OAuth credentials
     are created.
     """
 
@@ -214,10 +215,10 @@ class BookFromTextFile(object):
             }
         # now slice the lines list so we have the next two untweeted lines
         self.lines = itertools.islice(
-        self.lines,
-        self.database.row[1],
-        self.database.row[1] + 2,
-        None)
+            self.lines,
+            self.database.row[1],
+            self.database.row[1] + 2,
+            None)
 
     def format_tweet(self):
         """ Properly format an input string depending on whether it's a header
@@ -240,16 +241,18 @@ class BookFromTextFile(object):
         # If a header word is matched at the beginning of a line
         if comped.match(cur_line):
             logging.info(
-            "New header line found on line %s. Content: %s",
-            self.position["lastline"] + 1,
-            cur_line)
+                "New header line found on line %s. Content: %s",
+                self.position["lastline"] + 1,
+                cur_line)
             self.position["displayline"] = 1
             # counter skips the next line, since we're tweeting it
             self.position["lastline"] += 2
             self.position["prefix"] = cur_line
             output_line = ('%s\nl. %s: %s') \
-            % (cur_line.strip(), str(self.position["displayline"]),
-            next(self.lines).strip())
+            % (
+                cur_line.strip(),
+                str(self.position["displayline"]),
+                next(self.lines).strip())
             return output_line
         # no header match, so check to see if we're on line 0
         if self.position["lastline"] == 0:
@@ -308,7 +311,7 @@ def open_file(to_read):
     """
     import codecs
     try:
-        with codecs.open(to_read, mode = 'r', encoding = 'utf-8') as got_file:
+        with codecs.open(to_read, mode='r', encoding='utf-8') as got_file:
             return imp_file(got_file)
     except IOError:
         logging.critical("Couldn't read from file %s. exiting", to_read)
