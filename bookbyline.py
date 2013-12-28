@@ -293,8 +293,8 @@ printing anything.")
                 api.update_status(payload)
             else:
                 print payload
-        except tweepy.TweepError, err:
-            logging.critical("Couldn't update status. Error was: %s", err)
+        except tweepy.TweepError as err:
+            logging.critical("Couldn't update status. Error was: %s" % err.reason)
             raise
         self.database.write_vals(
             self.position["lastline"],
