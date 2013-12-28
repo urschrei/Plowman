@@ -12,7 +12,7 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 1. If you haven't already done so, download and install [tweepy], and sign up for a [Twitter] account
 2. Copy `bookbyline.py`, `getOAuth.py`, and the text file containing your poem into a directory of your choosing (cron should be able to access it). Ensure that both of the python files have been [chmod]ded `a+x`
-3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py -l -file /path/to/text.txt -header header1 header2 … headern`, where `header`*n*" is a word (including punctuation, such as colons etc.) which will cause any line which begins with it to be treated as a header line
+3. Switch back to your home directory (`cd ~`), and call the script as follows: `python /path/to/bookbyline.py -l -file /path/to/text.txt -header header1 header2 … headern`, where each `header` is a word (including punctuation, such as colons etc.) which will cause any line which begins with it to be treated as a header line
     * example: `python mydir/bookbyline.py -l -file mydir/assets/poem.txt -header Inferno: Purgatory: Paradise:`
 4. When you first run the script, you will be prompted to create OAuth credentials, and the script will attempt to open your default browser on the <https://dev.twitter.com/apps/new> page. If you have previously set up an application for OAuth access, and have a Consumer Key/Secret pair, you may skip steps 5 and 6, and enter them at the prompt, as detailed in step 7b.
 5. Once you have signed into Twitter, you will have to complete a form with the following fields:
