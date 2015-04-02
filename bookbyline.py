@@ -108,12 +108,11 @@ on position (digest ASC)'
         if not self.row:
             # no rows were returned, insert default values + new digest
             logging.info(
-"New file found, inserting row.\nSHA1: %s", str(self.book_digest))
+                "New file found, inserting row.\nSHA1: %s", str(self.book_digest))
             try:
                 oavals = self._create_oauth()
             except sqlite3.OperationalError:
-                logging.critical(
-                "Couldn't insert new row into table. Exiting")
+                logging.critical("Couldn't insert new row into table. Exiting")
                 # close the SQLite connection, and quit
                 raise
             self._insert_values(oavals)
@@ -123,14 +122,14 @@ on position (digest ASC)'
         """ Insert OAuth keys and file digest into newly-created db
         """
         with self.connection:
-            self.cursor.execute \
-            ('INSERT INTO position VALUES \
-            (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
-            oavals["conkey"], oavals["consecret"],
-            oavals["acckey"], oavals["accsecret"]))
+            self.cursor.execute(
+                'INSERT INTO position VALUES \
+                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
+                oavals["conkey"], oavals["consecret"],
+                oavals["acckey"], oavals["accsecret"]))
             self.connection.commit()
             self.cursor.execute(
-            'SELECT * FROM position WHERE digest = ?', (self.book_digest,))
+                'SELECT * FROM position WHERE digest = ?', (self.book_digest,))
 
     def _create_oauth(self):
         """ Obtain OAuth creds from Twitter, using the Tweepy lib
@@ -161,15 +160,12 @@ Error was: %s" % (self.book_digest, err)
         with self.connection:
             try:
                 self.cursor.execute(
-                'UPDATE position SET position = ?,\
-displayline = ?, header = ?, digest = ? WHERE digest = ?',
-                (last_l, disp_l, prefix, self.book_digest, self.book_digest))
-            except (
-            sqlite3.OperationalError,
-            sqlite3.ProgrammingError,
-            IndexError):
-                logging.error("%s Couldn't update the db", (str(sys.argv[0])))
-                raise
+                    'UPDATE position SET position = ?,\
+                    displayline = ?, header = ?, digest = ? WHERE digest = ?',
+                    (last_l, disp_l, prefix, self.book_digest, self.book_digest))
+            except(sqlite3.OperationalError, sqlite3.ProgrammingError, IndexError):
+                    logging.error("%s Couldn't update the db", (str(sys.argv[0])))
+                    raise
 
 
 class BookFromTextFile(object):
