@@ -287,7 +287,7 @@ printing anything.")
         auth = tweepy.OAuthHandler(self.oavals["conkey"],
         self.oavals["consecret"])
         auth.set_access_token(self.oavals["acckey"], self.oavals["accsecret"])
-        api = tweepy.API(auth, secure = True)
+        api = tweepy.API(auth)
         try:
             if live_tweet == True:
                 api.update_status(payload)
