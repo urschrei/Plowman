@@ -105,7 +105,7 @@ on position (digest ASC)'
         """
         # try to select the correct row, based on the SHA1 digest
         self.row = self.cursor.fetchone()
-        if self.row == None:
+        if not self.row:
             # no rows were returned, insert default values + new digest
             logging.info(
 "New file found, inserting row.\nSHA1: %s", str(self.book_digest))
