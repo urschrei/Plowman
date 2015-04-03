@@ -19,7 +19,6 @@ This module requires the Tweepy library: http://github.com/joshthecoder/tweepy
 
 """
 import sys
-import sqlite3
 import logging
 import re
 import hashlib
@@ -34,6 +33,94 @@ except ImportError:
 Please install using e.g. pip, or obtain it from GitHub at \n\
 http://github.com/joshthecoder/tweepy"
     raise
+
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.dialects import sqlite
+from sqlalchemy import Column, Integer, BigInteger, String
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import DateTime
+from sqlalchemy.sql import expression
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import MultipleResultsFound
+
+
+# SO much boilerplate
+
+BigIntegerType = BigInteger()
+BigIntegerType = BigIntegerType.with_variant(sqlite.INTEGER(), 'sqlite')
+
+
+# create a custom utcnow function
+class utcnow(expression.FunctionElement):
+    type = DateTime()
+
+
+@compiles(utcnow, 'sqlite')
+def sqlite_utcnow(element, compiler, **kw):
+    return "CURRENT_TIMESTAMP"
+
+
+class AppMixin(object):
+    """
+    Provide common attributes to our models
+    In this case, lowercase table names, timestamp, and a primary key column
+    """
+
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    __mapper_args__ = {'always_refresh': True}
+
+    id = Column(BigIntegerType, primary_key=True)
+    # the correct function is automatically selected based on the dialect
+    timestamp = Column(DateTime, server_default=utcnow())
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """
+    Emit a PRAGMA statement enforcing foreign-key integrity when an Engine
+    instance connects to the DB
+    """
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+# boilerplate ends
+
+Base = declarative_base()
+
+
+class Position(Base, AppMixin):
+    """stores book details"""
+    field_length = 50
+    position = Column(Integer)
+    displayline = Column(Integer)
+    headers = Column(String(field_length))
+    digest = Column(String(field_length))
+    conkey = Column(String(field_length))
+    consecret =  Column(String(field_length))
+    acckey = Column(String(field_length))
+    accsecret = Column(String(field_length))
+
+
+def sync(db_name):
+    """
+    Connect to the DB, return a usable session
+    """
+    # first, bind to or create the db
+    engine = create_engine(
+        db_name,
+        encoding="utf8")
+    # create the tables by syncing metadata from the models
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return session
 
 # logging stuff
 # could also do: LOG = logging.getLogger(__name__)
@@ -56,116 +143,65 @@ class MatchError(Exception):
         return repr(self.error)
 
 
-class DBconn(object):
-    """ Create a SQLite connection, or create a new db and table
+def get_row(sess, digest):
+    """ Select a row based on the input file SHA1 hash, or create a new
+    entry, and new OAuth credentials
     """
+    # try to select the correct row, based on the SHA1 digest
+    try:
+        row = sess.query(Position).filter_by(digest=digest).one()
+    except NoResultFound:
+        logging.info(
+            "New file found, inserting row.\nSHA1: %s", str(digest))
+        oavals = create_oauth(sess, digest)
+        row = Position(
+            position=0,
+            displayline=0,
+            headers='',
+            digest=digest,
+            conkey=oavals.get('conkey'),
+            consecret=oavals.get('consecret'),
+            acckey=oavals.get('acckey'),
+            accsecret=oavals.get('accsecret')
+        )
+        sess.add(row)
+        # try to catch an insertion error here
+        sess.commit()
+        row = sess.query(Position).filter_by(digest=digest).one()
+    return row
 
-    def __init__(self, digest=None, loc='tweet_books.sl3'):
-        # create a tuple for db insertion
-        # NB do not use this value if you're explicitly specifying tuples
-        # see the insert statement, for instance
-        self.book_digest = digest
-        self.db_name = loc
-        self.schema = 'CREATE TABLE position \
-(id INTEGER PRIMARY KEY, position INTEGER, displayline INTEGER, \
-header TEXT, digest TEXT, conkey TEXT, consecret TEXT, \
-acckey TEXT, accsecret TEXT)'
-        self.connection = None
-        self.cursor = None
-        self.row = None
-        self.open_connection()
+def create_oauth(sess, digest):
+    """ Obtain OAuth creds from Twitter, using the Tweepy lib
+    """
+    try:
+        # attempt to create OAuth credentials
+        import getOAuth
+    except ImportError:
+        logging.critical("Couldn't import getOAuth module")
+        raise
+    try:
+        oav = {}
+        getOAuth.get_creds(oav)
+    except tweepy.TweepError, err:
+        print "Couldn't complete OAuth setup for %s. Fatal. Exiting.\n\
+Error was: %s" % (digest, err)
+        logging.critical(
+        "Couldn't complete OAuth setup for %s.\nError was: %s",\
+        digest, err)
+        sess.rollback()
+        sess.flush()
+        raise
+    return oav
 
-    def open_connection(self):
-        """ Open a db connection, or create a new db
-        """
-        try:
-            self.connection = sqlite3.connect(self.db_name)
-        except IOError:
-            logging.critical(
-                "Couldn't read from, or create a db. That's a show-stopper.")
-            raise
-        with self.connection:
-            self.cursor = self.connection.cursor()
-            try:
-                self.cursor.execute(
-                    'SELECT * FROM position WHERE digest = ?',
-                    (self.book_digest,)
-                )
-            except sqlite3.OperationalError:
-                logging.info("Couldn't find table \'position\'. Creating…")
-                # set up a new blank table and index
-                idx = 'CREATE UNIQUE INDEX \"digest_idx\" \
-on position (digest ASC)'
-                self.cursor.execute(self.schema)
-                self.cursor.execute(idx)
-
-    def get_row(self):
-        """ Select a row based on the input file SHA1 hash, or create a new
-        entry, and new OAuth credentials
-        """
-        # try to select the correct row, based on the SHA1 digest
-        self.row = self.cursor.fetchone()
-        if not self.row:
-            # no rows were returned, insert default values + new digest
-            logging.info(
-                "New file found, inserting row.\nSHA1: %s", str(self.book_digest))
-            try:
-                oavals = self._create_oauth()
-            except sqlite3.OperationalError:
-                logging.critical("Couldn't insert new row into table. Exiting")
-                # close the SQLite connection, and quit
-                raise
-            self._insert_values(oavals)
-            self.row = self.cursor.fetchone()
-
-    def _insert_values(self, oavals):
-        """ Insert OAuth keys and file digest into newly-created db
-        """
-        with self.connection:
-            self.cursor.execute(
-                'INSERT INTO position VALUES \
-                (null, ?, ?, null, ?, ?, ?, ?, ?)',(0, 0, self.book_digest,
-                oavals["conkey"], oavals["consecret"],
-                oavals["acckey"], oavals["accsecret"]))
-            self.connection.commit()
-            self.cursor.execute(
-                'SELECT * FROM position WHERE digest = ?', (self.book_digest,))
-
-    def _create_oauth(self):
-        """ Obtain OAuth creds from Twitter, using the Tweepy lib
-        """
-        try:
-            # attempt to create OAuth credentials
-            import getOAuth
-        except ImportError:
-            logging.critical("Couldn't import getOAuth module")
-            raise
-        try:
-            oav = {}
-            getOAuth.get_creds(oav)
-        except tweepy.TweepError, err:
-            print "Couldn't complete OAuth setup for %s. Fatal. Exiting.\n\
-Error was: %s" % (self.book_digest, err)
-            logging.critical(
-            "Couldn't complete OAuth setup for %s.\nError was: %s",\
-            self.book_digest, err)
-            # not much point in writing anything to the db in this case
-            self.connection.rollback()
-            raise
-        return oav
-
-    def write_vals(self, last_l, disp_l, prefix):
-        """ Write new line and header values to the db
-        """
-        with self.connection:
-            try:
-                self.cursor.execute(
-                    'UPDATE position SET position = ?,\
-                    displayline = ?, header = ?, digest = ? WHERE digest = ?',
-                    (last_l, disp_l, prefix, self.book_digest, self.book_digest))
-            except(sqlite3.OperationalError, sqlite3.ProgrammingError, IndexError):
-                    logging.error("%s Couldn't update the db", (str(sys.argv[0])))
-                    raise
+def write_vals(sess, digest, last_l, disp_l, prefix):
+    """ Write new line and header values to the db
+    """
+    sess.query(Position).filter(Position.digest == digest).update({
+        'position':last_l,
+        'displayline':disp_l,
+        'headers':prefix,
+        'digest':digest})
+    sess.commit()
 
 
 class BookFromTextFile(object):
@@ -189,31 +225,32 @@ class BookFromTextFile(object):
         # try to get hash of returned list
         self.sha = get_hash(self.lines)
 
-    def get_db(self, created_connection):
+    def get_db(self, sess):
         """ Open/create a db, and retrieve/insert a row based on SHA1 hash
         """
 
         # try to open a db connection
-        self.database = created_connection
-        self.database.get_row()
+        self.database = sess
+        # self.database.get_row()
+        self.row = get_row(self.database, self.sha)
         # set instance attrs from the db
         self.position = {
-            "lastline": self.database.row[1],
-            "displayline": self.database.row[2],
-            "prefix": self.database.row[3]
+            "lastline": self.row.position,
+            "displayline": self.row.displayline,
+            "prefix": self.row.headers
             }
         # set OAuth credentials
         self.oavals = {
-            "conkey": self.database.row[5],
-            "consecret": self.database.row[6],
-            "acckey": self.database.row[7],
-            "accsecret": self.database.row[8]
+            "conkey": self.row.conkey,
+            "consecret": self.row.consecret,
+            "acckey": self.row.acckey,
+            "accsecret": self.row.acckey
             }
         # now slice the lines list so we have the next two untweeted lines
         self.lines = itertools.islice(
             self.lines,
-            self.database.row[1],
-            self.database.row[1] + 2,
+            self.row.displayline,
+            self.row.displayline + 2,
             None)
 
     def format_tweet(self):
@@ -292,7 +329,9 @@ printing anything.")
         except tweepy.TweepError as err:
             logging.critical("Couldn't update status. Error was: %s" % err.reason)
             raise
-        self.database.write_vals(
+        write_vals(
+            self.database,
+            self.sha,
             self.position["lastline"],
             self.position["displayline"],
             self.position["prefix"])
@@ -369,8 +408,10 @@ def main():
         print err
         logging.critical(err)
         raise
+    location = 'books.sl3'
+    sess = sync('sqlite://%s' % location)
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
-    input_book.get_db(DBconn(input_book.sha))
+    input_book.get_db(sess)
     input_book.emit_tweet(fromcl.live)
 
 

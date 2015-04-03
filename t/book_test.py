@@ -9,7 +9,8 @@ import sys
 sys.path.insert(0, '..')
 
 import bookbyline
-
+# import sync
+from bookbyline import Position
 
 class BookTests(unittest.TestCase):
 
@@ -17,22 +18,49 @@ class BookTests(unittest.TestCase):
         """ Set up known good values with which to test
         """
         self.book = bookbyline.BookFromTextFile('test_file.txt', 'This')
-        self.database = bookbyline.DBconn(self.book.sha, ':memory:')
+        self.database = bookbyline.sync('sqlite://')
+        self.digest = u'dd5c938011a40a91c49ca9564f3aac40b67c8d27'
         # provide known correct SHA1 hash of a list of strings
-        self.knownValues = ((['a', 'b', 'c', 'd', 'e'],
-        '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
+        self.knownValues = (
+            (['a', 'b', 'c', 'd', 'e'],
+            '03de6c570bfe24bfc328ccd7ca46b76eadaf4334'),
         )
         # read lines from a test text file
         with open('test_file.txt', 'r') as f:
             self.lines = f.readlines()
         # made-up OAauth values
-        self.database.oavals = {}
-        self.database.oavals['conkey'] = 'A'
-        self.database.oavals['consecret'] = 'B'
-        self.database.oavals['acckey'] = 'C'
-        self.database.oavals['accsecret'] = 'D'
-        self.database._insert_values(self.database.oavals)
+        oavals = {}
+        oavals['conkey'] = 'A'
+        oavals['consecret'] = 'B'
+        oavals['acckey'] = 'C'
+        oavals['accsecret'] = 'D'
+
+        # populate db
+        row = Position(
+            position=0,
+            displayline=0,
+            headers='',
+            digest=self.digest,
+            conkey=oavals.get('conkey'),
+            consecret=oavals.get('consecret'),
+            acckey=oavals.get('acckey'),
+            accsecret=oavals.get('accsecret')
+        )
+        self.database.add(row)
+        # self.database.query(Position).all()[0].update({
+        # # self.database.query(Position).filter_by(digest=self.digest).one().update({
+        #     'position': 0,
+        #     'displayline': 0,
+        #     'headers': '',
+        #     'digest': self.digest,
+        #     'conkey': oavals.get('conkey'),
+        #     'consecret': oavals.get('consecret'),
+        #     'acckey': oavals.get('acckey'),
+        #     'accsecret': oavals.get('accsecret')
+        #     })
+        self.database.commit()
         self.live = False
+        self.book.get_db(self.database)
 
     def tearDown(self):
         """ Empty the database table and remove old known values when each
@@ -54,8 +82,10 @@ class BookTests(unittest.TestCase):
         """ Should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
-        self.database.get_row()
-        self.assertEqual(self.database.row[4], self.book.sha)
+        import ipdb
+        # ipdb.set_trace()
+        bookbyline.get_row(self.database, self.digest)
+        self.assertEqual(self.book.row.digest, self.book.sha)
 
     def testFormatTweet(self):
         """ Will pass if the output var begins with 'This',
@@ -111,21 +141,11 @@ class BookTests(unittest.TestCase):
     def testWriteValuesToDatabase(self):
         """ Will pass if we successfully write updated values to the db
         """
-        self.database.write_vals(33, 45, 'New Header')
-        self.database.cursor.execute(
-        'SELECT * FROM position'
-        )
-        r = self.database.cursor.fetchone()
-        self.assertEqual(r[1],33)
-        self.assertEqual(r[2],45)
-        self.assertEqual(r[3],'New Header')
-
-    def testWriteValsToDatabaseFail(self):
-        """ Will fail if the database is closed when we try to write to it
-        """
-        self.database.connection.close()
-        with self.assertRaises(bookbyline.sqlite3.ProgrammingError):
-            self.database.write_vals(33, 45, 'New Header')
+        bookbyline.write_vals(self.database, self.digest, 33, 45, 'New Header')
+        r = self.database.query(Position).all()[0]
+        self.assertEqual(r.position, 33)
+        self.assertEqual(r.displayline, 45)
+        self.assertEqual(r.headers,'New Header')
 
     def testCreateDatabaseConnectionFromBook(self):
         """ Ensure that values are returned from db to book object
