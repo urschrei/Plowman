@@ -15,7 +15,6 @@ as a header
 - a "verbose" switch, which will cause a full stack trace to be printed if an
 error occurs.
 The second argument can be given as a single word, or a space-separated list
-This module requires the Tweepy library: http://github.com/joshthecoder/tweepy
 
 """
 import sys
@@ -31,7 +30,7 @@ try:
 except ImportError:
     print "The tweepy module could not be found.\n\
 Please install using e.g. pip, or obtain it from GitHub at \n\
-http://github.com/joshthecoder/tweepy"
+https://github.com/tweepy/tweepy"
     raise
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -45,7 +44,6 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.exc import MultipleResultsFound
 
 
 # SO much boilerplate
@@ -78,7 +76,7 @@ class AppMixin(object):
 
     id = Column(BigIntegerType, primary_key=True)
     # the correct function is automatically selected based on the dialect
-    timestamp = Column(DateTime, server_default=utcnow())
+    # timestamp = Column(DateTime, server_default=utcnow())
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -408,8 +406,8 @@ def main():
         print err
         logging.critical(err)
         raise
-    location = 'books.sl3'
-    sess = sync('sqlite://%s' % location)
+    location = 'tweet_books.sl3'
+    sess = sync('sqlite:///%s' % location)
     input_book = BookFromTextFile(fromcl.file, fromcl.header)
     input_book.get_db(sess)
     input_book.emit_tweet(fromcl.live)

@@ -18,7 +18,7 @@ class BookTests(unittest.TestCase):
         """ Set up known good values with which to test
         """
         self.book = bookbyline.BookFromTextFile('test_file.txt', 'This')
-        self.database = bookbyline.sync('sqlite://')
+        self.database = bookbyline.sync('sqlite:///')
         self.digest = u'dd5c938011a40a91c49ca9564f3aac40b67c8d27'
         # provide known correct SHA1 hash of a list of strings
         self.knownValues = (
