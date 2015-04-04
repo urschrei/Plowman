@@ -165,7 +165,6 @@ def get_row(sess, digest):
         sess.add(row)
         # try to catch an insertion error here
         sess.commit()
-        row = sess.query(Position).filter_by(digest=digest).one()
     return row
 
 def create_oauth(sess, digest):
