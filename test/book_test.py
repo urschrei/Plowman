@@ -47,17 +47,6 @@ class BookTests(unittest.TestCase):
             accsecret=oavals.get('accsecret')
         )
         self.database.add(row)
-        # self.database.query(Position).all()[0].update({
-        # # self.database.query(Position).filter_by(digest=self.digest).one().update({
-        #     'position': 0,
-        #     'displayline': 0,
-        #     'headers': '',
-        #     'digest': self.digest,
-        #     'conkey': oavals.get('conkey'),
-        #     'consecret': oavals.get('consecret'),
-        #     'acckey': oavals.get('acckey'),
-        #     'accsecret': oavals.get('accsecret')
-        #     })
         self.database.commit()
         self.live = False
         self.book.get_db(self.database)
@@ -82,8 +71,6 @@ class BookTests(unittest.TestCase):
         """ Should be able to insert rows into the db, and retrieve them
             the db digest value should be the same as the book object's
         """
-        import ipdb
-        # ipdb.set_trace()
         bookbyline.get_row(self.database, self.digest)
         self.assertEqual(self.book.row.digest, self.book.sha)
 
