@@ -3,7 +3,7 @@
 (With apologies to [William Langland][2])  
 
 A Python script designed to tweet an epic poem stored in a text file, line by line. Line position, line display number, current header, and a [SHA1][1] digest of the file which generated them are stored in a SQLite 3 database. The script is configured to take account of header lines, and thus maintain line numbering (i.e. line numbers are reset to 1, and the new header is prepended as necessary). In addition, the digest ensures that line generation will not continue if the file contents are edited in any way. If the file is modified (other than renaming), the script will reset to the first line of the text file. This mechanism also allows a single database to be used for many poems; the digest provides an excellent primary key, thus, only a single table row is required per poem. The header configuration and display are particular to epic poetry in this case, allowing us to see the current book/passus/canto and line number, respectively.
-[SQLite 3], The [tweepy] library, as well as a [Twitter] account are required.
+[SQLite 3], The [tweepy] and [SQLAlchemy] libraries, as well as a [Twitter] account are required.
 In order to authorise and make use of the script, you will require OAuth API access to your Twitter account. OAuth credentials are stored alongside the line position and file digest, and the script will attempt to create them for you each time a new poem is added.
 
 # Initial Setup #
@@ -57,6 +57,7 @@ These setup steps assume that you are familiar with a terminal, and that you hav
 
 
 [tweepy]: https://github.com/tweepy/tweepy
+[SQLAlchemy]: http://sqlalchemy.org
 [Twitter]: https://twitter.com/signup
 [SQLite 3]: http://www.sqlite.org/
 [chmod]: http://en.wikipedia.org/wiki/Chmod
